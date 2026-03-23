@@ -316,3 +316,56 @@ label {
     font-size: 1.1rem;
   }
 }
+
+/* === Admin === */
+
+.admin-form {
+  max-width: 600px;
+}
+
+.admin-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.admin-error {
+  border: 1px solid #cc0000;
+  color: #cc0000;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.admin-table th {
+  color: #009900;
+  font-weight: normal;
+  font-size: 0.75rem;
+}
+
+.answer-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  align-items: center;
+}
+
+.answer-row input {
+  flex: 1;
+}
+
+.btn-remove {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+}

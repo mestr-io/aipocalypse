@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Hono app entry point
 The application SHALL have an entry point at `src/index.ts` that creates a Hono app, registers all route groups, and starts the HTTP server on port 5555.
@@ -10,13 +10,6 @@ The application SHALL have an entry point at `src/index.ts` that creates a Hono 
 #### Scenario: Server logs startup
 - **WHEN** the server starts
 - **THEN** a message is printed to stdout indicating the server is running and on which port
-
-### Requirement: Static file serving
-The application SHALL serve static files from `src/public/` at the `/public/` URL path.
-
-#### Scenario: CSS file is served
-- **WHEN** a browser requests `GET /public/style.css`
-- **THEN** the server responds with the CSS file and `Content-Type: text/css`
 
 ### Requirement: Route group stubs
 The application SHALL define route stubs for all 5 route groups. Each stub SHALL return a valid HTML page using the shared layout. The admin route group SHALL be replaced with real admin auth and CRUD routes.
@@ -40,10 +33,3 @@ The application SHALL define route stubs for all 5 route groups. Each stub SHALL
 #### Scenario: Admin routes redirect to login
 - **WHEN** an unauthenticated browser requests `GET /admin`
 - **THEN** the server redirects to `GET /admin/login`
-
-### Requirement: Middleware placeholder ordering
-The application SHALL mount middleware in this order: static files, session (placeholder), route handlers. The session middleware SHALL be a no-op in this scaffold that sets an empty user context.
-
-#### Scenario: Middleware executes in order
-- **WHEN** any request is processed
-- **THEN** static file check runs first, then the session placeholder, then the route handler

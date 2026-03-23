@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { layout } from "./views/layout";
+import { admin } from "./admin/routes";
 
 // ---------------------------------------------------------------------------
 // App
@@ -70,16 +71,14 @@ app.post("/vote/:pollId", (c) => {
   return c.text("Unauthorized", 401);
 });
 
-// Admin route — requires auth (not yet implemented)
-app.get("/admin", (c) => {
-  return c.text("Unauthorized", 401);
-});
+// Admin routes — sub-app with its own guard middleware
+app.route("/admin", admin);
 
 // ---------------------------------------------------------------------------
 // Start server
 // ---------------------------------------------------------------------------
 
-const port = 3000;
+const port = 5555;
 
 console.log(`AIPocalypse running at http://localhost:${port}`);
 
