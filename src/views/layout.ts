@@ -1,6 +1,8 @@
+import type { User } from "../db/queries/users";
+
 export interface LayoutOptions {
   title?: string;
-  user?: { name: string; avatarUrl: string } | null;
+  user?: User | null;
 }
 
 /**
@@ -14,7 +16,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   const pageTitle = title === "AIPocalypse" ? title : `${title} — AIPocalypse`;
 
   const authSection = user
-    ? `<span class="dimmed">${escapeHtml(user.name)}</span> | <a href="/auth/logout">Logout</a>`
+    ? `<span class="user-info"><img src="${escapeHtml(user.avatarUrl)}" alt="" class="user-avatar"> <span class="dimmed">${escapeHtml(user.name)}</span></span> | <a href="/auth/logout">Logout</a>`
     : `<a href="/auth/login">Sign in with GitHub</a>`;
 
   return `<!DOCTYPE html>

@@ -414,3 +414,82 @@ label {
   font-size: 0.75rem;
   padding: 0.3rem 0.6rem;
 }
+
+/* === Voting Form === */
+
+.vote-form .poll-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.vote-form .poll-option input[type="radio"] {
+  width: auto;
+  margin-top: 0.35rem;
+  accent-color: #00cc00;
+  cursor: pointer;
+}
+
+.vote-form .poll-option .option-content {
+  flex: 1;
+}
+
+.vote-form .poll-option label.option-label {
+  display: inline;
+  font-size: inherit;
+  color: #cccccc;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+}
+
+.vote-form .poll-option:hover {
+  background: #1a1a2e;
+}
+
+.vote-submit {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.vote-marker {
+  font-size: 0.75rem;
+}
+
+.vote-message {
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.poll-option.voted .option-label {
+  color: #ffff66;
+}
+
+.poll-status {
+  margin-bottom: 0.75rem;
+}
+
+/* === User Avatar in Nav === */
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.user-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+/* === Section Headings === */
+
+.section-heading {
+  font-size: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333340;
+}

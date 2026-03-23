@@ -154,6 +154,28 @@ export function listActivePolls(): ActivePollRow[] {
 }
 
 /**
+ * List all visible polls (active + done), non-deleted, with total vote counts.
+ * Active polls first, then done. Within each group, by creation date descending.
+ */
+export function listPublicPolls(): ActivePollRow[] {
+  const db = getDb();
+  return db
+    .query<ActivePollRow, []>(
+      `SELECT
+         p.id, p.name, p.body, p.dueDate, p.status, p.createdAt,
+         COUNT(a.id) AS voteCount
+       FROM polls p
+       LEFT JOIN answers a ON a.pollId = p.id AND a.deletedAt IS NULL
+       WHERE p.deletedAt IS NULL AND p.status IN ('active', 'done')
+       GROUP BY p.id
+       ORDER BY
+         CASE p.status WHEN 'active' THEN 0 WHEN 'done' THEN 1 END,
+         p.createdAt DESC`
+    )
+    .all();
+}
+
+/**
  * Get a single poll with its questions and per-question vote counts.
  * Returns null if the poll doesn't exist or is soft-deleted.
  */
