@@ -1,0 +1,16 @@
+{
+  "name": "aipocalypse",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot run src/index.ts",
+    "db:migrate": "bun run src/db/migrate.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "hono": "^4"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}

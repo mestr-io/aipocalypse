@@ -1,0 +1,318 @@
+/* AIPocalypse — Advent of Code inspired terminal aesthetic */
+
+/* === Reset & Base === */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #0f0f23;
+  color: #cccccc;
+  font-family: "Source Code Pro", ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Typography === */
+
+h1, h2, h3, h4 {
+  color: #cccccc;
+  font-weight: normal;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+  color: #00cc00;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 0.75rem;
+}
+
+/* === Links === */
+
+a {
+  color: #009900;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  color: #00cc00;
+}
+
+/* === Layout === */
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  width: 100%;
+}
+
+/* === Navigation === */
+
+nav {
+  border-bottom: 1px solid #333340;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+nav .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-title {
+  font-size: 1.2rem;
+  color: #00cc00;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+
+.site-title:hover {
+  color: #ffff66;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+.nav-links a {
+  color: #009900;
+  font-size: 0.85rem;
+}
+
+/* === Main Content === */
+
+main {
+  flex: 1;
+  padding-bottom: 2rem;
+}
+
+/* === Footer === */
+
+footer {
+  border-top: 1px solid #333340;
+  padding: 1rem 0;
+  margin-top: auto;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #333340;
+}
+
+/* === Gold Highlights === */
+
+.gold {
+  color: #ffff66;
+}
+
+.green {
+  color: #00cc00;
+}
+
+.dimmed {
+  color: #333340;
+}
+
+/* === Progress Bar — AoC style [*******     ] === */
+
+.progress-bar {
+  font-family: inherit;
+  white-space: pre;
+  display: inline-block;
+}
+
+.progress-bar::before {
+  content: "[";
+  color: #cccccc;
+}
+
+.progress-bar::after {
+  content: "]";
+  color: #cccccc;
+}
+
+.progress-bar .filled {
+  color: #ffff66;
+}
+
+.progress-bar .empty {
+  color: #333340;
+}
+
+/* === Poll Cards === */
+
+.poll-card {
+  border: 1px solid #333340;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.poll-card:hover {
+  border-color: #009900;
+}
+
+.poll-card h3 a {
+  color: #cccccc;
+}
+
+.poll-card h3 a:hover {
+  color: #ffff66;
+}
+
+.poll-card .meta {
+  font-size: 0.8rem;
+  color: #333340;
+  margin-top: 0.5rem;
+}
+
+.poll-card .meta .due-date {
+  color: #009900;
+}
+
+/* === Poll Detail === */
+
+.poll-question {
+  font-size: 1.1rem;
+  color: #00cc00;
+  margin-bottom: 1.5rem;
+}
+
+.poll-options {
+  list-style: none;
+  margin-bottom: 1.5rem;
+}
+
+.poll-options li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.poll-options li:last-child {
+  border-bottom: none;
+}
+
+/* === Status Badges === */
+
+.status {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  display: inline-block;
+}
+
+.status-active {
+  color: #00cc00;
+}
+
+.status-done {
+  color: #ffff66;
+}
+
+.status-hidden {
+  color: #333340;
+}
+
+/* === Auth Prompt === */
+
+.auth-prompt {
+  border: 1px dashed #333340;
+  padding: 1rem;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #333340;
+}
+
+.auth-prompt a {
+  color: #00cc00;
+}
+
+/* === Buttons === */
+
+button,
+.btn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: none;
+  border: 1px solid #009900;
+  color: #009900;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+}
+
+button:hover,
+.btn:hover {
+  background: #009900;
+  color: #0f0f23;
+}
+
+/* === Forms (admin) === */
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: 0.85rem;
+  background: #1a1a2e;
+  border: 1px solid #333340;
+  color: #cccccc;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #009900;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: #009900;
+  margin-bottom: 0.25rem;
+}
+
+/* === Responsive === */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  nav .container {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+out/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# bun
+bun.lock
+
+# data (SQLite databases)
+data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
