@@ -89,12 +89,12 @@ function main() {
       // Delete answers from seed users
       db.run(
         `DELETE FROM answers WHERE userId IN (${ids.map(() => "?").join(",")})`,
-        ...ids,
+        ids,
       );
       // Delete seed users
       db.run(
         `DELETE FROM users WHERE id IN (${ids.map(() => "?").join(",")})`,
-        ...ids,
+        ids,
       );
       console.log(`\nCleared ${existingSeedUsers.length} previous seed users and their votes.`);
     }

@@ -6,18 +6,18 @@ AIPocalypse uses **GitHub OAuth Apps** (not GitHub Apps) to authenticate users. 
 
 Register the app at **GitHub > Settings > Developer settings > OAuth Apps > New OAuth App**.
 
-| Field | Value |
-|-------|-------|
-| Application name | `AIPocalypse` |
-| Homepage URL | `https://mestr.io/labs/aipocalypse` |
+| Field                      | Value                                             |
+| -------------------------- | ------------------------------------------------- |
+| Application name           | `AIPocalypse`                                     |
+| Homepage URL               | `https://mestr.io/labs/aipocalypse`               |
 | Authorization callback URL | `https://mestr.io/labs/aipocalypse/auth/callback` |
 
 For local development, register a **second** OAuth App with:
 
-| Field | Value |
-|-------|-------|
-| Homepage URL | `http://localhost:3000` |
-| Authorization callback URL | `http://localhost:3000/auth/callback` |
+| Field                      | Value                                 |
+| -------------------------- | ------------------------------------- |
+| Homepage URL               | `http://localhost:5555`               |
+| Authorization callback URL | `http://localhost:5555/auth/callback` |
 
 OAuth Apps can only have **one** callback URL. You need separate apps for production and development.
 
@@ -97,12 +97,12 @@ GET https://github.com/login/oauth/authorize
 
 **Parameters:**
 
-| Parameter | Value | Purpose |
-|-----------|-------|---------|
-| `client_id` | From env | Identifies the OAuth App |
-| `redirect_uri` | `/auth/callback` (full URL) | Where GitHub sends the user back |
-| `scope` | Empty string | Request only public profile access |
-| `state` | Random unguessable string | CSRF protection |
+| Parameter      | Value                       | Purpose                            |
+| -------------- | --------------------------- | ---------------------------------- |
+| `client_id`    | From env                    | Identifies the OAuth App           |
+| `redirect_uri` | `/auth/callback` (full URL) | Where GitHub sends the user back   |
+| `scope`        | Empty string                | Request only public profile access |
+| `state`        | Random unguessable string   | CSRF protection                    |
 
 The `state` value is generated per-request (e.g., 32-byte random hex) and stored in an HTTP-only cookie so it can be verified in the callback.
 
@@ -192,31 +192,31 @@ If a future feature requires GitHub API access after login (e.g., fetching repos
 
 Sessions are cookie-based:
 
-| Property | Value |
-|----------|-------|
-| Cookie name | `aipocalypse_session` |
-| HttpOnly | `true` |
-| Secure | `true` (production) |
-| SameSite | `Lax` |
-| Signed | Yes (with a server-side secret) |
-| Contents | User `id` (UUID v7) |
+| Property    | Value                           |
+| ----------- | ------------------------------- |
+| Cookie name | `aipocalypse_session`           |
+| HttpOnly    | `true`                          |
+| Secure      | `true` (production)             |
+| SameSite    | `Lax`                           |
+| Signed      | Yes (with a server-side secret) |
+| Contents    | User `id` (UUID v7)             |
 
 The session cookie contains only the user's ID. All other user data is fetched from the database on each request that needs it.
 
 ## Environment variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GITHUB_CLIENT_ID` | Yes | OAuth App client ID |
-| `GITHUB_CLIENT_SECRET` | Yes | OAuth App client secret |
+| Variable               | Required | Description             |
+| ---------------------- | -------- | ----------------------- |
+| `GITHUB_CLIENT_ID`     | Yes      | OAuth App client ID     |
+| `GITHUB_CLIENT_SECRET` | Yes      | OAuth App client secret |
 
 ## Routes
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/auth/login` | GET | Generate state, redirect to GitHub |
-| `/auth/callback` | GET | Handle OAuth callback, exchange code, upsert user, set session |
-| `/auth/logout` | GET | Clear session cookie, redirect to `/` |
+| Route            | Method | Purpose                                                        |
+| ---------------- | ------ | -------------------------------------------------------------- |
+| `/auth/login`    | GET    | Generate state, redirect to GitHub                             |
+| `/auth/callback` | GET    | Handle OAuth callback, exchange code, upsert user, set session |
+| `/auth/logout`   | GET    | Clear session cookie, redirect to `/`                          |
 
 ## Security checklist
 

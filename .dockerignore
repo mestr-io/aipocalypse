@@ -1,0 +1,14 @@
+node_modules/
+data/
+.test-tmp/
+.env
+.git/
+.gitignore
+openspec/
+docs/
+scripts/
+nginx/
+*.md
+Makefile
+.dockerignore
+Dockerfile
