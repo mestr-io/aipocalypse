@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "bun --hot run src/index.ts",
     "db:migrate": "bun run src/db/migrate.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
     "hono": "^4"

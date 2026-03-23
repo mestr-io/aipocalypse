@@ -1,12 +1,17 @@
 import { layout } from "../layout";
 import { escapeHtml } from "../layout";
 
+export interface AnswerValue {
+  id?: string;
+  text: string;
+}
+
 export interface PollFormValues {
   title: string;
   body: string;
   dueDate: string;
   status: string;
-  answers: string[];
+  answers: AnswerValue[];
 }
 
 export interface PollFormOptions {
@@ -20,7 +25,7 @@ const DEFAULT_VALUES: PollFormValues = {
   body: "",
   dueDate: "",
   status: "hidden",
-  answers: ["", ""],
+  answers: [{ text: "" }, { text: "" }],
 };
 
 /**
@@ -29,7 +34,7 @@ const DEFAULT_VALUES: PollFormValues = {
 export function adminPollFormPage(options: PollFormOptions = {}): string {
   const { error, values = DEFAULT_VALUES, pollId } = options;
   const isEdit = !!pollId;
-  const answers = values.answers.length >= 2 ? values.answers : ["", ""];
+  const answers = values.answers.length >= 2 ? values.answers : [{ text: "" }, { text: "" }];
 
   const errorHtml = error
     ? `<div class="admin-error">${escapeHtml(error)}</div>`
@@ -46,7 +51,8 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     .map(
       (a, i) => `
       <div class="answer-row">
-        <input type="text" name="answers[]" value="${escapeHtml(a)}" placeholder="Option ${i + 1}">
+        <input type="hidden" name="answerIds[]" value="${a.id ? escapeHtml(a.id) : ""}">
+        <input type="text" name="answers[]" value="${escapeHtml(a.text)}" placeholder="Option ${i + 1}">
         <button type="button" class="btn btn-remove" onclick="removeAnswer(this)">Remove</button>
       </div>`
     )
@@ -77,7 +83,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
         <select id="status" name="status">${statusOptions}</select>
       </div>
       <div class="form-group">
-        <label>Answer Options <span class="dimmed">(min 2)</span></label>
+        <label>Answer Options <span class="admin-dimmed">(min 2)</span></label>
         <div id="answers-container">
           ${answerRows}
         </div>
@@ -85,7 +91,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
       </div>
       <div class="form-group" style="margin-top: 1.5rem;">
         <button type="submit">${submitLabel}</button>
-        <a href="/admin" class="dimmed" style="margin-left: 1rem;">Cancel</a>
+        <a href="/admin" class="admin-dimmed" style="margin-left: 1rem;">Cancel</a>
       </div>
     </form>
 
@@ -95,7 +101,8 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
         var count = container.querySelectorAll('.answer-row').length;
         var div = document.createElement('div');
         div.className = 'answer-row';
-        div.innerHTML = '<input type="text" name="answers[]" placeholder="Option ' + (count + 1) + '">' +
+        div.innerHTML = '<input type="hidden" name="answerIds[]" value="">' +
+          '<input type="text" name="answers[]" placeholder="Option ' + (count + 1) + '">' +
           '<button type="button" class="btn btn-remove" onclick="removeAnswer(this)">Remove</button>';
         container.appendChild(div);
         updateRemoveButtons();

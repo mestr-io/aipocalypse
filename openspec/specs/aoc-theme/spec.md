@@ -1,19 +1,4 @@
-## ADDED Requirements
-
-### Requirement: Shared HTML layout
-The project SHALL have a layout function at `src/views/layout.ts` that wraps page content in a complete HTML document. The layout SHALL include the doctype, head (with charset, viewport, title, and CSS link), a navigation bar, main content area, and footer.
-
-#### Scenario: Layout produces valid HTML
-- **WHEN** the layout function is called with a title and body content
-- **THEN** it returns a complete HTML5 document string with the content wrapped in the nav/main/footer structure
-
-#### Scenario: Navigation shows site title
-- **WHEN** any page is rendered through the layout
-- **THEN** the navigation bar displays "AIPocalypse" as a link to `/`
-
-#### Scenario: CSS is linked
-- **WHEN** the layout renders the `<head>`
-- **THEN** it includes a `<link>` to `/public/style.css`
+## MODIFIED Requirements
 
 ### Requirement: Advent of Code visual theme
 The CSS SHALL implement a visual style inspired by Advent of Code with the following properties:
@@ -21,7 +6,9 @@ The CSS SHALL implement a visual style inspired by Advent of Code with the follo
 - Primary text color: `#cccccc` (light grey)
 - Accent color: `#00cc00` (terminal green)
 - Highlight color: `#ffff66` (gold)
-- Dimmed color: `#333340` (dark grey)
+- Public dimmed color: `#5e8c61` (pastel green) — used for secondary text on public pages via `.dimmed` class
+- Admin dimmed color: `#c8b87a` (pastel yellow) — used for secondary text on admin pages via `.admin-dimmed` class
+- Structural dimmed color: `#333340` (dark grey) — used for borders, separators, and non-text decorative elements only
 - Link color: `#009900` (dark green), with `#00cc00` on hover
 - Font: `"Source Code Pro", monospace`
 
@@ -33,28 +20,23 @@ The CSS SHALL implement a visual style inspired by Advent of Code with the follo
 - **WHEN** links are rendered
 - **THEN** they appear in `#009900` and change to `#00cc00` on hover with no underline by default
 
-### Requirement: AoC-style progress bars
-The CSS SHALL support progress bars rendered as `[*******     ]` where completed stars are gold (`#ffff66`) and the remaining space is dimmed grey (`#333340`). Progress bars are pure HTML/CSS with no JavaScript.
+#### Scenario: Public dimmed text is pastel green
+- **WHEN** secondary text is rendered on a public page using the `.dimmed` class
+- **THEN** the text color is `#5e8c61`
 
-#### Scenario: Progress bar at 50%
-- **WHEN** a progress bar element is rendered with 50% completion
-- **THEN** it displays as `[**********          ]` with the stars in gold and remaining space in dimmed grey (approximately, based on character width)
+#### Scenario: Admin dimmed text is pastel yellow
+- **WHEN** secondary text is rendered on an admin page using the `.admin-dimmed` class
+- **THEN** the text color is `#c8b87a`
 
-#### Scenario: Progress bar at 0%
-- **WHEN** a progress bar element is rendered with 0% completion
-- **THEN** it displays as `[                    ]` with all dimmed characters
+## ADDED Requirements
 
-#### Scenario: Progress bar at 100%
-- **WHEN** a progress bar element is rendered with 100% completion
-- **THEN** it displays as `[********************]` with all stars in gold
+### Requirement: Deleted poll row styling
+The CSS SHALL provide styling for soft-deleted poll rows in the admin dashboard. Deleted rows SHALL have strikethrough text on the title and a muted visual treatment to distinguish them from active polls.
 
-### Requirement: Responsive monospace layout
-The layout SHALL be readable on both desktop and mobile. Content SHALL have a maximum width to maintain readability of monospace text. The layout SHALL NOT use heavy UI components, rounded cards, or gradients.
+#### Scenario: Deleted row renders with strikethrough
+- **WHEN** a poll row has the `.deleted-row` class
+- **THEN** the poll title text has `text-decoration: line-through` and the row has reduced opacity or muted coloring
 
-#### Scenario: Desktop viewport
-- **WHEN** the page is viewed on a desktop browser (>768px)
-- **THEN** content is centered with a max-width and comfortable padding
-
-#### Scenario: Mobile viewport
-- **WHEN** the page is viewed on a mobile browser (<768px)
-- **THEN** content fills the screen width with appropriate padding and text remains readable
+#### Scenario: Deleted status badge
+- **WHEN** a poll has been soft-deleted
+- **THEN** a `[deleted]` badge is displayed in a muted red color (`#aa4444`)

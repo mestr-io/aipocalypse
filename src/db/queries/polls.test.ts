@@ -112,14 +112,15 @@ describe("listPolls", () => {
     expect(polls[0]!.questionCount).toBe(3);
   });
 
-  test("excludes soft-deleted polls", () => {
+  test("includes soft-deleted polls with deletedAt populated", () => {
     const id = createPoll(
       { title: "Deleted", body: "", dueDate: "", status: "hidden" },
       ["A", "B"]
     );
 
     const db = new Database(TEST_DB_PATH);
-    db.run("UPDATE polls SET deletedAt = ? WHERE id = ?", [new Date().toISOString(), id]);
+    const deletedTime = new Date().toISOString();
+    db.run("UPDATE polls SET deletedAt = ? WHERE id = ?", [deletedTime, id]);
     db.close();
 
     // Need to close and reopen the singleton after direct DB modification
@@ -127,7 +128,20 @@ describe("listPolls", () => {
     closeDb();
 
     const polls = listPolls();
-    expect(polls).toHaveLength(0);
+    expect(polls).toHaveLength(1);
+    expect(polls[0]!.name).toBe("Deleted");
+    expect(polls[0]!.deletedAt).toBe(deletedTime);
+  });
+
+  test("returns null deletedAt for non-deleted polls", () => {
+    createPoll(
+      { title: "Active", body: "", dueDate: "", status: "active" },
+      ["A", "B"]
+    );
+
+    const polls = listPolls();
+    expect(polls).toHaveLength(1);
+    expect(polls[0]!.deletedAt).toBeNull();
   });
 });
 
@@ -311,16 +325,24 @@ describe("getPollForEdit", () => {
 });
 
 describe("updatePoll", () => {
-  test("updates poll and replaces questions", () => {
+  test("updates poll metadata and questions in-place", () => {
     const pollId = createPoll(
       { title: "Original", body: "Old body", dueDate: "2026-01-01", status: "hidden" },
       ["Old A", "Old B"]
     );
 
+    const originalQuestions = getPollForEdit(pollId)!.questions;
+    const qIdA = originalQuestions[0]!.id;
+    const qIdB = originalQuestions[1]!.id;
+
     const success = updatePoll(
       pollId,
       { title: "Updated", body: "New body", dueDate: "2026-06-01", status: "active" },
-      ["New X", "New Y", "New Z"]
+      [
+        { id: qIdA, text: "Edited A" },
+        { id: qIdB, text: "Edited B" },
+        { text: "New C" },
+      ]
     );
 
     expect(success).toBe(true);
@@ -331,42 +353,168 @@ describe("updatePoll", () => {
     expect(updated!.dueDate).toBe("2026-06-01");
     expect(updated!.status).toBe("active");
     expect(updated!.questions).toHaveLength(3);
-    expect(updated!.questions[0]!.body).toBe("New X");
+    expect(updated!.questions[0]!.body).toBe("Edited A");
     expect(updated!.questions[0]!.position).toBe(10);
+    expect(updated!.questions[2]!.body).toBe("New C");
     expect(updated!.questions[2]!.position).toBe(30);
+  });
+
+  test("preserves question IDs when text changes", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden" },
+      ["Option A", "Option B"]
+    );
+
+    const originalIds = getPollForEdit(pollId)!.questions.map((q) => q.id);
+
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden" },
+      [
+        { id: originalIds[0], text: "Fixed typo A" },
+        { id: originalIds[1], text: "Fixed typo B" },
+      ]
+    );
+
+    const updated = getPollForEdit(pollId)!;
+    expect(updated.questions[0]!.id).toBe(originalIds[0]);
+    expect(updated.questions[0]!.body).toBe("Fixed typo A");
+    expect(updated.questions[1]!.id).toBe(originalIds[1]);
+    expect(updated.questions[1]!.body).toBe("Fixed typo B");
+  });
+
+  test("adds new questions alongside existing ones", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden" },
+      ["Keep A", "Keep B"]
+    );
+
+    const originalIds = getPollForEdit(pollId)!.questions.map((q) => q.id);
+
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden" },
+      [
+        { id: originalIds[0], text: "Keep A" },
+        { id: originalIds[1], text: "Keep B" },
+        { text: "Brand New C" },
+      ]
+    );
+
+    const updated = getPollForEdit(pollId)!;
+    expect(updated.questions).toHaveLength(3);
+    // Original IDs preserved
+    expect(updated.questions[0]!.id).toBe(originalIds[0]);
+    expect(updated.questions[1]!.id).toBe(originalIds[1]);
+    // New question has a different ID
+    expect(updated.questions[2]!.id).not.toBe(originalIds[0]);
+    expect(updated.questions[2]!.id).not.toBe(originalIds[1]);
+    expect(updated.questions[2]!.body).toBe("Brand New C");
+  });
+
+  test("soft-deletes only removed questions", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden" },
+      ["Keep", "Remove Me", "Also Keep"]
+    );
+
+    const originalQuestions = getPollForEdit(pollId)!.questions;
+    const keepId1 = originalQuestions[0]!.id;
+    const removeId = originalQuestions[1]!.id;
+    const keepId2 = originalQuestions[2]!.id;
+
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden" },
+      [
+        { id: keepId1, text: "Keep" },
+        { id: keepId2, text: "Also Keep" },
+      ]
+    );
+
+    const updated = getPollForEdit(pollId)!;
+    expect(updated.questions).toHaveLength(2);
+    expect(updated.questions[0]!.id).toBe(keepId1);
+    expect(updated.questions[1]!.id).toBe(keepId2);
+
+    // Verify removed question is soft-deleted
+    const db = new Database(TEST_DB_PATH, { readonly: true });
+    const removed = db
+      .query<{ deletedAt: string | null }, [string]>(
+        "SELECT deletedAt FROM questions WHERE id = ?"
+      )
+      .get(removeId);
+    db.close();
+
+    expect(removed!.deletedAt).not.toBeNull();
+  });
+
+  test("preserves votes when editing question text", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "active" },
+      ["Opt A", "Opt B"]
+    );
+
+    const qIds = getQuestionIds(pollId);
+    const { closeDb } = require("../index");
+    closeDb();
+
+    // Insert votes on original questions
+    insertVote(pollId, qIds[0]!);
+    insertVote(pollId, qIds[0]!);
+    insertVote(pollId, qIds[1]!);
+
+    // Edit question text (fix typo) — IDs stay the same
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "active" },
+      [
+        { id: qIds[0], text: "Option A (fixed)" },
+        { id: qIds[1], text: "Option B (fixed)" },
+      ]
+    );
+
+    // Votes should still be associated
+    const result = getPollWithQuestions(pollId);
+    expect(result!.totalVotes).toBe(3);
+    expect(result!.questions[0]!.voteCount).toBe(2);
+    expect(result!.questions[1]!.voteCount).toBe(1);
+  });
+
+  test("recalculates positions based on new order", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden" },
+      ["First", "Second", "Third"]
+    );
+
+    const originalQuestions = getPollForEdit(pollId)!.questions;
+
+    // Reverse the order
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden" },
+      [
+        { id: originalQuestions[2]!.id, text: "Third" },
+        { id: originalQuestions[1]!.id, text: "Second" },
+        { id: originalQuestions[0]!.id, text: "First" },
+      ]
+    );
+
+    const updated = getPollForEdit(pollId)!;
+    expect(updated.questions[0]!.body).toBe("Third");
+    expect(updated.questions[0]!.position).toBe(10);
+    expect(updated.questions[1]!.body).toBe("Second");
+    expect(updated.questions[1]!.position).toBe(20);
+    expect(updated.questions[2]!.body).toBe("First");
+    expect(updated.questions[2]!.position).toBe(30);
   });
 
   test("returns false for non-existent poll", () => {
     const success = updatePoll(
       "non-existent",
       { title: "X", body: "", dueDate: null, status: "hidden" },
-      ["A", "B"]
+      [{ text: "A" }, { text: "B" }]
     );
     expect(success).toBe(false);
-  });
-
-  test("soft-deletes old questions", () => {
-    const pollId = createPoll(
-      { title: "Poll", body: "", dueDate: "", status: "hidden" },
-      ["Old A", "Old B"]
-    );
-
-    updatePoll(
-      pollId,
-      { title: "Poll", body: "", dueDate: null, status: "hidden" },
-      ["New A", "New B"]
-    );
-
-    const db = new Database(TEST_DB_PATH, { readonly: true });
-    const deleted = db
-      .query("SELECT COUNT(*) AS cnt FROM questions WHERE pollId = ? AND deletedAt IS NOT NULL")
-      .get(pollId) as { cnt: number };
-    const active = db
-      .query("SELECT COUNT(*) AS cnt FROM questions WHERE pollId = ? AND deletedAt IS NULL")
-      .get(pollId) as { cnt: number };
-    db.close();
-
-    expect(deleted.cnt).toBe(2); // old ones soft-deleted
-    expect(active.cnt).toBe(2); // new ones active
   });
 });

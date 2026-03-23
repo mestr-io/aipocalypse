@@ -4,7 +4,7 @@ import { adminGuard } from "./middleware";
 import { checkPassword, signToken, COOKIE_NAME, COOKIE_OPTIONS } from "./auth";
 import { adminLoginPage } from "../views/admin/login";
 import { adminDashboardPage } from "../views/admin/dashboard";
-import { adminPollFormPage } from "../views/admin/poll-form";
+import { adminPollFormPage, type AnswerValue } from "../views/admin/poll-form";
 import { createPoll, listPolls, getPollForEdit, updatePoll } from "../db/queries/polls";
 
 const admin = new Hono();
@@ -89,7 +89,7 @@ admin.post("/polls", async (c) => {
     return c.html(
       adminPollFormPage({
         error: errors.join(" "),
-        values: { title, body: bodyText, dueDate, status, answers },
+        values: { title, body: bodyText, dueDate, status, answers: answers.map((a) => ({ text: a })) },
       }),
       400
     );
@@ -128,7 +128,7 @@ admin.get("/polls/:id/edit", (c) => {
         body: poll.body,
         dueDate: poll.dueDate,
         status: poll.status,
-        answers: poll.questions.map((q) => q.body),
+        answers: poll.questions.map((q) => ({ id: q.id, text: q.body })),
       },
     })
   );
@@ -151,15 +151,26 @@ admin.post("/polls/:id", async (c) => {
   const status = typeof body.status === "string" ? body.status : "hidden";
 
   const rawAnswers = body["answers[]"];
-  const answers: string[] = (Array.isArray(rawAnswers) ? rawAnswers : [rawAnswers])
+  const rawAnswerIds = body["answerIds[]"];
+  const answerTexts: string[] = (Array.isArray(rawAnswers) ? rawAnswers : [rawAnswers])
     .filter((a): a is string => typeof a === "string")
-    .map((a) => a.trim())
-    .filter((a) => a.length > 0);
+    .map((a) => a.trim());
+  const answerIds: string[] = (Array.isArray(rawAnswerIds) ? rawAnswerIds : [rawAnswerIds])
+    .filter((a): a is string => typeof a === "string");
+
+  // Pair IDs with text, filtering out empty text entries
+  const answerPairs: AnswerValue[] = [];
+  for (let i = 0; i < answerTexts.length; i++) {
+    if (answerTexts[i]!.length > 0) {
+      const id = answerIds[i]?.trim() || undefined;
+      answerPairs.push({ id: id || undefined, text: answerTexts[i]! });
+    }
+  }
 
   // Validation
   const errors: string[] = [];
   if (!title) errors.push("Title is required.");
-  if (answers.length < 2) errors.push("At least 2 answer options are required.");
+  if (answerPairs.length < 2) errors.push("At least 2 answer options are required.");
   if (status !== "hidden" && status !== "active" && status !== "done") {
     errors.push("Invalid status.");
   }
@@ -169,7 +180,7 @@ admin.post("/polls/:id", async (c) => {
       adminPollFormPage({
         pollId,
         error: errors.join(" "),
-        values: { title, body: bodyText, dueDate, status, answers },
+        values: { title, body: bodyText, dueDate, status, answers: answerPairs },
       }),
       400
     );
@@ -183,7 +194,7 @@ admin.post("/polls/:id", async (c) => {
       dueDate: dueDate || null,
       status,
     },
-    answers
+    answerPairs
   );
 
   return c.redirect("/admin");

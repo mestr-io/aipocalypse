@@ -1,4 +1,4 @@
-.PHONY: dev test migrate install clean
+.PHONY: dev test migrate install clean seed
 
 dev:
 	bun --hot run src/index.ts
@@ -14,3 +14,6 @@ install:
 
 clean:
 	rm -rf data/ node_modules/ .test-tmp/
+
+seed:
+	bun run scripts/seed.ts

@@ -138,7 +138,11 @@ footer {
 }
 
 .dimmed {
-  color: #333340;
+  color: #5e8c61;
+}
+
+.admin-dimmed {
+  color: #c8b87a;
 }
 
 /* === Progress Bar — AoC style [*******     ] === */
@@ -266,6 +270,18 @@ footer {
 
 .status-hidden {
   color: #333340;
+}
+
+.status-deleted {
+  color: #aa4444;
+}
+
+.deleted-row td {
+  opacity: 0.6;
+}
+
+.deleted-row .poll-title-deleted {
+  text-decoration: line-through;
 }
 
 /* === Auth Prompt === */

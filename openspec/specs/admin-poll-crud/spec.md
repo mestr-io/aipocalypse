@@ -1,53 +1,23 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Admin dashboard
-The application SHALL serve an admin dashboard at `GET /admin` that lists all polls. Each poll title SHALL be a clickable link to the poll's edit form.
+The application SHALL serve an admin dashboard at `GET /admin` that lists all polls, including soft-deleted ones. Each non-deleted poll title SHALL be a clickable link to the poll's edit form. Soft-deleted polls SHALL be visually distinguished with strikethrough text on the title and a `[deleted]` status badge.
 
-#### Scenario: Dashboard shows all polls
+#### Scenario: Dashboard shows all polls including deleted
 - **WHEN** an authenticated admin requests `GET /admin`
-- **THEN** the server responds with an HTML page listing all polls (including hidden/draft) with their title as a link to `/admin/polls/:id/edit`, status, question count, and creation date
+- **THEN** the server responds with an HTML page listing all polls (including hidden, done, and soft-deleted) with their title, status, question count, and creation date
+
+#### Scenario: Deleted polls have visual distinction
+- **WHEN** the dashboard renders a soft-deleted poll
+- **THEN** the poll row has strikethrough styling on the title, displays a `[deleted]` status badge, and the title is NOT a clickable edit link
+
+#### Scenario: Non-deleted polls retain edit links
+- **WHEN** the dashboard renders a non-deleted poll
+- **THEN** the poll title is a clickable link to `/admin/polls/:id/edit`
 
 #### Scenario: Dashboard with no polls
-- **WHEN** an authenticated admin requests `GET /admin` and no polls exist
+- **WHEN** an authenticated admin requests `GET /admin` and no polls exist (including no deleted polls)
 - **THEN** the page displays a message indicating no polls exist and a link to create one
-
-### Requirement: Poll creation form
-The application SHALL serve a poll creation form at `GET /admin/polls/new` with fields for poll metadata and answer options.
-
-#### Scenario: Form renders with default fields
-- **WHEN** an authenticated admin requests `GET /admin/polls/new`
-- **THEN** the server responds with an HTML form containing: title input, body textarea, due date input, status select (hidden/active/done), and at least 2 answer option inputs
-
-#### Scenario: Add answer option
-- **WHEN** the admin clicks an "Add option" button on the form
-- **THEN** a new answer option input row is added to the form
-
-#### Scenario: Remove answer option
-- **WHEN** the admin clicks a "Remove" button on an answer row and more than 2 rows exist
-- **THEN** that answer option input row is removed from the form
-
-#### Scenario: Cannot remove below minimum
-- **WHEN** only 2 answer option rows remain
-- **THEN** the "Remove" buttons are disabled or hidden
-
-### Requirement: Poll creation handler
-The application SHALL accept poll creation submissions at `POST /admin/polls` and insert the poll and all answer options in a single database transaction.
-
-#### Scenario: Valid poll submission
-- **WHEN** a POST to `/admin/polls` includes a title, body, at least 2 non-empty answer options, and a valid status
-- **THEN** the server creates a poll record and question records in a single transaction, assigns UUID v7 IDs, and redirects to `GET /admin`
-
-#### Scenario: Missing title
-- **WHEN** a POST to `/admin/polls` has an empty title
-- **THEN** the server responds with 400 and re-renders the form with an error message
-
-#### Scenario: Fewer than 2 answers
-- **WHEN** a POST to `/admin/polls` includes fewer than 2 non-empty answer options
-- **THEN** the server responds with 400 and re-renders the form with an error message indicating at least 2 options are required
-
-#### Scenario: Answer positioning
-- **WHEN** a poll is created with multiple answer options
-- **THEN** each question record's `position` column starts at 10 and increments by 10 (10, 20, 30...)
 
 ### Requirement: Poll query functions
 The application SHALL provide typed query functions in `src/db/queries/polls.ts` for poll and question database operations.
@@ -56,6 +26,6 @@ The application SHALL provide typed query functions in `src/db/queries/polls.ts`
 - **WHEN** `createPoll()` is called with poll data and an array of answer strings
 - **THEN** a poll row and corresponding question rows are inserted inside a transaction, with positions starting at 10 and incrementing by 10, and the new poll ID is returned
 
-#### Scenario: List all polls
+#### Scenario: List all polls including deleted
 - **WHEN** `listPolls()` is called
-- **THEN** all non-soft-deleted polls are returned ordered by creation date descending, with a count of their questions
+- **THEN** all polls (including soft-deleted) are returned ordered by creation date descending, with a count of their non-deleted questions and the `deletedAt` timestamp

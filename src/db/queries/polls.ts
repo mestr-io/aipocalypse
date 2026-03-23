@@ -21,6 +21,7 @@ export interface PollRow {
   createdAt: string;
   updatedAt: string;
   questionCount: number;
+  deletedAt: string | null;
 }
 
 export interface ActivePollRow {
@@ -66,6 +67,11 @@ export interface PollForEdit {
   questions: QuestionRow[];
 }
 
+export interface AnswerInput {
+  id?: string;
+  text: string;
+}
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
@@ -108,8 +114,8 @@ export function createPoll(input: CreatePollInput, answers: string[]): string {
 }
 
 /**
- * List all non-deleted polls ordered by creation date descending.
- * Includes a count of non-deleted questions for each poll.
+ * List all polls (including soft-deleted) with question counts.
+ * Ordered by creation date descending.
  */
 export function listPolls(): PollRow[] {
   const db = getDb();
@@ -117,10 +123,10 @@ export function listPolls(): PollRow[] {
     .query<PollRow, []>(
       `SELECT
          p.id, p.name, p.body, p.dueDate, p.status, p.createdAt, p.updatedAt,
+         p.deletedAt,
          COUNT(q.id) AS questionCount
        FROM polls p
        LEFT JOIN questions q ON q.pollId = p.id AND q.deletedAt IS NULL
-       WHERE p.deletedAt IS NULL
        GROUP BY p.id
        ORDER BY p.createdAt DESC`
     )
@@ -222,13 +228,16 @@ export function getPollForEdit(pollId: string): PollForEdit | null {
 }
 
 /**
- * Update a poll and replace its questions in a single transaction.
- * Old questions are soft-deleted; new ones are inserted with 10-based positions.
+ * Update a poll and its questions in a single transaction.
+ *
+ * Questions with an existing `id` are updated in-place (preserving vote
+ * associations). Questions without an `id` are inserted as new rows.
+ * Existing questions whose IDs are absent from the input are soft-deleted.
  */
 export function updatePoll(
   pollId: string,
   input: CreatePollInput,
-  answers: string[]
+  answers: AnswerInput[]
 ): boolean {
   const db = getDb();
   const now = new Date().toISOString();
@@ -243,28 +252,55 @@ export function updatePoll(
   if (!existing) return false;
 
   db.transaction(() => {
-    // Update poll
+    // Update poll metadata
     db.run(
       `UPDATE polls SET name = ?, body = ?, dueDate = ?, status = ?, updatedAt = ?
        WHERE id = ?`,
       [input.title, input.body, input.dueDate ?? "", input.status, now, pollId]
     );
 
-    // Soft-delete old questions
-    db.run(
-      `UPDATE questions SET deletedAt = ?, updatedAt = ?
-       WHERE pollId = ? AND deletedAt IS NULL`,
-      [now, now, pollId]
-    );
+    // Get current active question IDs for this poll
+    const currentQuestions = db
+      .query<{ id: string }, [string]>(
+        "SELECT id FROM questions WHERE pollId = ? AND deletedAt IS NULL"
+      )
+      .all(pollId);
+    const currentIds = new Set(currentQuestions.map((q) => q.id));
 
-    // Insert new questions
+    // Track which existing IDs are kept
+    const keptIds = new Set<string>();
+
     for (let i = 0; i < answers.length; i++) {
-      const questionId = generateUUIDv7();
-      db.run(
-        `INSERT INTO questions (id, pollId, body, position, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [questionId, pollId, answers[i]!, (i + 1) * 10, now, now]
-      );
+      const answer = answers[i]!;
+      const position = (i + 1) * 10;
+
+      if (answer.id && currentIds.has(answer.id)) {
+        // Update existing question in-place
+        db.run(
+          `UPDATE questions SET body = ?, position = ?, updatedAt = ?
+           WHERE id = ?`,
+          [answer.text, position, now, answer.id]
+        );
+        keptIds.add(answer.id);
+      } else {
+        // Insert new question
+        const questionId = generateUUIDv7();
+        db.run(
+          `INSERT INTO questions (id, pollId, body, position, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [questionId, pollId, answer.text, position, now, now]
+        );
+      }
+    }
+
+    // Soft-delete questions that were removed from the form
+    for (const id of currentIds) {
+      if (!keptIds.has(id)) {
+        db.run(
+          `UPDATE questions SET deletedAt = ?, updatedAt = ? WHERE id = ?`,
+          [now, now, id]
+        );
+      }
     }
   })();
 
