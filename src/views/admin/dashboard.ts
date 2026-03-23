@@ -17,7 +17,7 @@ export function adminDashboardPage(polls: PollRow[]): string {
   const pollRows = polls.length > 0
     ? polls.map((p) => `
         <tr>
-          <td>${escapeHtml(p.name)}</td>
+          <td><a href="/admin/polls/${p.id}/edit">${escapeHtml(p.name)}</a></td>
           <td>${statusBadge(p.status)}</td>
           <td>${p.questionCount}</td>
           <td class="dimmed">${p.dueDate || "—"}</td>

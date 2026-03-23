@@ -12,6 +12,7 @@ export interface PollFormValues {
 export interface PollFormOptions {
   error?: string;
   values?: PollFormValues;
+  pollId?: string;
 }
 
 const DEFAULT_VALUES: PollFormValues = {
@@ -26,7 +27,8 @@ const DEFAULT_VALUES: PollFormValues = {
  * Admin poll creation form with dynamic answer rows.
  */
 export function adminPollFormPage(options: PollFormOptions = {}): string {
-  const { error, values = DEFAULT_VALUES } = options;
+  const { error, values = DEFAULT_VALUES, pollId } = options;
+  const isEdit = !!pollId;
   const answers = values.answers.length >= 2 ? values.answers : ["", ""];
 
   const errorHtml = error
@@ -50,10 +52,14 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     )
     .join("");
 
+  const pageTitle = isEdit ? "Edit Poll" : "New Poll";
+  const formAction = isEdit ? `/admin/polls/${pollId}` : "/admin/polls";
+  const submitLabel = isEdit ? "Update Poll" : "Create Poll";
+
   const content = `
-    <h1>New Poll</h1>
+    <h1>${pageTitle}</h1>
     ${errorHtml}
-    <form method="POST" action="/admin/polls" class="admin-form">
+    <form method="POST" action="${formAction}" class="admin-form">
       <div class="form-group">
         <label for="title">Title</label>
         <input type="text" id="title" name="title" value="${escapeHtml(values.title)}" required>
@@ -78,7 +84,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
         <button type="button" class="btn" onclick="addAnswer()" style="margin-top: 0.5rem;">+ Add Option</button>
       </div>
       <div class="form-group" style="margin-top: 1.5rem;">
-        <button type="submit">Create Poll</button>
+        <button type="submit">${submitLabel}</button>
         <a href="/admin" class="dimmed" style="margin-left: 1rem;">Cancel</a>
       </div>
     </form>
@@ -117,5 +123,5 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     </script>
   `;
 
-  return layout(content, { title: "New Poll" });
+  return layout(content, { title: pageTitle });
 }

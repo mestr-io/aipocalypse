@@ -169,6 +169,10 @@ footer {
 
 /* === Poll Cards === */
 
+.poll-list {
+  margin-top: 1.5rem;
+}
+
 .poll-card {
   border: 1px solid #333340;
   padding: 1rem 1.25rem;
@@ -179,44 +183,69 @@ footer {
   border-color: #009900;
 }
 
-.poll-card h3 a {
+.poll-card h2 {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.poll-card h2 a {
   color: #cccccc;
 }
 
-.poll-card h3 a:hover {
+.poll-card h2 a:hover {
   color: #ffff66;
 }
 
-.poll-card .meta {
-  font-size: 0.8rem;
-  color: #333340;
-  margin-top: 0.5rem;
+.poll-preview {
+  font-size: 0.85rem;
+  color: #666680;
+  margin-bottom: 0.4rem;
 }
 
-.poll-card .meta .due-date {
-  color: #009900;
+.poll-meta {
+  font-size: 0.8rem;
+  display: flex;
+  gap: 1.5rem;
 }
 
 /* === Poll Detail === */
 
-.poll-question {
-  font-size: 1.1rem;
-  color: #00cc00;
+.poll-body {
+  color: #666680;
+  font-size: 0.9rem;
   margin-bottom: 1.5rem;
 }
 
 .poll-options {
-  list-style: none;
   margin-bottom: 1.5rem;
 }
 
-.poll-options li {
+.poll-option {
   padding: 0.5rem 0;
   border-bottom: 1px solid #1a1a2e;
 }
 
-.poll-options li:last-child {
+.poll-option:last-child {
   border-bottom: none;
+}
+
+.option-label {
+  color: #cccccc;
+  margin-bottom: 0.25rem;
+}
+
+.option-bar {
+  font-size: 0.85rem;
+  color: #cccccc;
+  white-space: pre;
+}
+
+.option-percent {
+  color: #ffff66;
+}
+
+.poll-total {
+  font-size: 0.85rem;
 }
 
 /* === Status Badges === */

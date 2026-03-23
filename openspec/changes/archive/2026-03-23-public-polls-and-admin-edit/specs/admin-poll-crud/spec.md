@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Admin dashboard
 The application SHALL serve an admin dashboard at `GET /admin` that lists all polls. Each poll title SHALL be a clickable link to the poll's edit form.
@@ -10,25 +10,6 @@ The application SHALL serve an admin dashboard at `GET /admin` that lists all po
 #### Scenario: Dashboard with no polls
 - **WHEN** an authenticated admin requests `GET /admin` and no polls exist
 - **THEN** the page displays a message indicating no polls exist and a link to create one
-
-### Requirement: Poll creation form
-The application SHALL serve a poll creation form at `GET /admin/polls/new` with fields for poll metadata and answer options.
-
-#### Scenario: Form renders with default fields
-- **WHEN** an authenticated admin requests `GET /admin/polls/new`
-- **THEN** the server responds with an HTML form containing: title input, body textarea, due date input, status select (hidden/active/done), and at least 2 answer option inputs
-
-#### Scenario: Add answer option
-- **WHEN** the admin clicks an "Add option" button on the form
-- **THEN** a new answer option input row is added to the form
-
-#### Scenario: Remove answer option
-- **WHEN** the admin clicks a "Remove" button on an answer row and more than 2 rows exist
-- **THEN** that answer option input row is removed from the form
-
-#### Scenario: Cannot remove below minimum
-- **WHEN** only 2 answer option rows remain
-- **THEN** the "Remove" buttons are disabled or hidden
 
 ### Requirement: Poll creation handler
 The application SHALL accept poll creation submissions at `POST /admin/polls` and insert the poll and all answer options in a single database transaction.

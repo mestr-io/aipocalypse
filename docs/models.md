@@ -135,7 +135,7 @@ Represents one selectable option within a poll. Despite the name, these are the 
 | `id` | `TEXT` | `PRIMARY KEY` | UUID v7 |
 | `pollId` | `TEXT` | `NOT NULL REFERENCES polls(id)` | The poll this option belongs to |
 | `body` | `TEXT` | `NOT NULL` | The option text (e.g., "Accumulated layoffs hit the 10% mark") |
-| `order` | `INTEGER` | `NOT NULL` | Display position within the poll (0-indexed) |
+| `position` | `INTEGER` | `NOT NULL` | Display position within the poll. Starts at 10, increments by 10 (10, 20, 30...) to allow easy insertion between options |
 | `createdAt` | `TEXT` | `NOT NULL` | When the option was created |
 | `updatedAt` | `TEXT` | `NOT NULL` | Last edit |
 | `deletedAt` | `TEXT` | | Soft delete timestamp |
@@ -147,7 +147,7 @@ CREATE TABLE questions (
   id TEXT PRIMARY KEY,
   pollId TEXT NOT NULL REFERENCES polls(id),
   body TEXT NOT NULL,
-  "order" INTEGER NOT NULL,
+  position INTEGER NOT NULL,
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL,
   deletedAt TEXT
@@ -158,8 +158,8 @@ CREATE INDEX idx_questions_pollId ON questions(pollId);
 
 ### Notes
 
-- `order` determines the display sequence. Options are rendered sorted by `order ASC`.
-- `order` is a reserved word in SQL, so it must be quoted as `"order"` in queries.
+- `position` determines the display sequence. Options are rendered sorted by `position ASC`.
+- Positions start at 10 and increment by 10 (10, 20, 30...) to allow inserting options between existing ones without renumbering.
 - A poll typically has 3-6 options, but there is no enforced limit.
 - Deleting an option (soft delete) does not invalidate existing answers that reference it — they remain as historical records.
 
@@ -167,12 +167,12 @@ CREATE INDEX idx_questions_pollId ON questions(pollId);
 
 For the poll "Labour Market Impact 2026":
 
-| id | pollId | body | order |
-|----|--------|------|-------|
-| `019...a1` | `019...p1` | Companies are hiring more than in 2025 | 0 |
-| `019...a2` | `019...p1` | No significant changes | 1 |
-| `019...a3` | `019...p1` | Accumulated layoffs hit the 10% mark | 2 |
-| `019...a4` | `019...p1` | Accumulated layoffs hit the 25% mark | 3 |
+| id | pollId | body | position |
+|----|--------|------|----------|
+| `019...a1` | `019...p1` | Companies are hiring more than in 2025 | 10 |
+| `019...a2` | `019...p1` | No significant changes | 20 |
+| `019...a3` | `019...p1` | Accumulated layoffs hit the 10% mark | 30 |
+| `019...a4` | `019...p1` | Accumulated layoffs hit the 25% mark | 40 |
 
 ---
 

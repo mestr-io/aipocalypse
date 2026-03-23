@@ -1,7 +1,10 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { layout } from "./views/layout";
+import { pollListPage } from "./views/poll-list";
+import { pollDetailPage } from "./views/poll-detail";
 import { admin } from "./admin/routes";
+import { listActivePolls, getPollWithQuestions } from "./db/queries/polls";
 
 // ---------------------------------------------------------------------------
 // App
@@ -31,22 +34,20 @@ app.use("*", async (c, next) => {
 
 // Home page
 app.get("/", (c) => {
-  const content = `
-    <h1>Welcome to <span class="green">AIPocalypse</span></h1>
-    <p>Community predictions on how agentic coding tools will reshape the developer profession.</p>
-    <p class="dimmed">Polls coming soon.</p>
-  `;
-  return c.html(layout(content));
+  const polls = listActivePolls();
+  return c.html(pollListPage(polls));
 });
 
-// Poll detail stub
+// Poll detail
 app.get("/poll/:id", (c) => {
   const id = c.req.param("id");
-  const content = `
-    <h1>Poll Detail</h1>
-    <p class="dimmed">Poll <code>${id}</code> — not yet implemented.</p>
-  `;
-  return c.html(layout(content, { title: "Poll Detail" }));
+  const poll = getPollWithQuestions(id);
+
+  if (!poll || poll.status === "hidden") {
+    return c.text("Not Found", 404);
+  }
+
+  return c.html(pollDetailPage(poll));
 });
 
 // Auth routes

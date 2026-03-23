@@ -5,7 +5,7 @@ import { checkPassword, signToken, COOKIE_NAME, COOKIE_OPTIONS } from "./auth";
 import { adminLoginPage } from "../views/admin/login";
 import { adminDashboardPage } from "../views/admin/dashboard";
 import { adminPollFormPage } from "../views/admin/poll-form";
-import { createPoll, listPolls } from "../db/queries/polls";
+import { createPoll, listPolls, getPollForEdit, updatePoll } from "../db/queries/polls";
 
 const admin = new Hono();
 
@@ -96,6 +96,87 @@ admin.post("/polls", async (c) => {
   }
 
   createPoll(
+    {
+      title,
+      body: bodyText,
+      dueDate: dueDate || null,
+      status,
+    },
+    answers
+  );
+
+  return c.redirect("/admin");
+});
+
+// ---------------------------------------------------------------------------
+// Poll editing
+// ---------------------------------------------------------------------------
+
+admin.get("/polls/:id/edit", (c) => {
+  const pollId = c.req.param("id");
+  const poll = getPollForEdit(pollId);
+
+  if (!poll) {
+    return c.text("Poll not found", 404);
+  }
+
+  return c.html(
+    adminPollFormPage({
+      pollId: poll.id,
+      values: {
+        title: poll.name,
+        body: poll.body,
+        dueDate: poll.dueDate,
+        status: poll.status,
+        answers: poll.questions.map((q) => q.body),
+      },
+    })
+  );
+});
+
+admin.post("/polls/:id", async (c) => {
+  const pollId = c.req.param("id");
+
+  // Verify poll exists before processing
+  const existing = getPollForEdit(pollId);
+  if (!existing) {
+    return c.text("Poll not found", 404);
+  }
+
+  const body = await c.req.parseBody({ all: true });
+
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const bodyText = typeof body.body === "string" ? body.body.trim() : "";
+  const dueDate = typeof body.dueDate === "string" ? body.dueDate.trim() : "";
+  const status = typeof body.status === "string" ? body.status : "hidden";
+
+  const rawAnswers = body["answers[]"];
+  const answers: string[] = (Array.isArray(rawAnswers) ? rawAnswers : [rawAnswers])
+    .filter((a): a is string => typeof a === "string")
+    .map((a) => a.trim())
+    .filter((a) => a.length > 0);
+
+  // Validation
+  const errors: string[] = [];
+  if (!title) errors.push("Title is required.");
+  if (answers.length < 2) errors.push("At least 2 answer options are required.");
+  if (status !== "hidden" && status !== "active" && status !== "done") {
+    errors.push("Invalid status.");
+  }
+
+  if (errors.length > 0) {
+    return c.html(
+      adminPollFormPage({
+        pollId,
+        error: errors.join(" "),
+        values: { title, body: bodyText, dueDate, status, answers },
+      }),
+      400
+    );
+  }
+
+  updatePoll(
+    pollId,
     {
       title,
       body: bodyText,
