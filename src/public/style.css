@@ -226,6 +226,7 @@ footer {
 
 .poll-option {
   padding: 0.5rem 0;
+  border: 1px solid transparent;
   border-bottom: 1px solid #1a1a2e;
 }
 
