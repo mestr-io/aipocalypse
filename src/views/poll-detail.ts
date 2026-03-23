@@ -25,26 +25,18 @@ export function pollDetailPage(
           ? Math.round((q.voteCount / poll.totalVotes) * 100)
           : 0;
 
-      const isSelected = userVote === q.id;
-      const selectedClass = isSelected ? " voted" : "";
-      const selectedMarker = isSelected
-        ? `<span class="vote-marker gold">&#9654;</span> `
-        : "";
+      const isCurrent = userVote === q.id;
+      const currentClass = isCurrent ? " option-current" : "";
 
-      // If user can vote, show radio buttons
-      const radioInput = canVote
-        ? `<input type="radio" name="questionId" value="${escapeHtml(q.id)}"${isSelected ? " checked" : ""} id="q-${escapeHtml(q.id)}">`
+      // Clickable options when user can vote
+      const interactiveAttrs = canVote
+        ? ` data-question-id="${escapeHtml(q.id)}" tabindex="0" role="option"`
         : "";
-
-      const labelTag = canVote
-        ? `<label for="q-${escapeHtml(q.id)}" class="option-label${selectedClass}">${selectedMarker}${escapeHtml(q.body)}</label>`
-        : `<div class="option-label${selectedClass}">${selectedMarker}${escapeHtml(q.body)}</div>`;
 
       return `
-      <div class="poll-option${selectedClass}">
-        ${radioInput}
+      <div class="poll-option${currentClass}"${interactiveAttrs}>
         <div class="option-content">
-          ${labelTag}
+          <div class="option-label">${escapeHtml(q.body)}</div>
           <div class="option-bar">
             ${progressBar(percent)} <span class="option-percent">${percent}%</span> <span class="dimmed">(${q.voteCount})</span>
           </div>
@@ -54,13 +46,57 @@ export function pollDetailPage(
     .join("");
 
   // Voting form wrapper (only if user can vote)
+  const currentVoteId = userVote ? escapeHtml(userVote) : "";
   const formOpen = canVote
-    ? `<form method="POST" action="/vote/${escapeHtml(poll.id)}" class="vote-form">`
+    ? `<form method="POST" action="/vote/${escapeHtml(poll.id)}" class="vote-form" data-current-vote="${currentVoteId}">
+       <input type="hidden" name="questionId" value="${currentVoteId}">`
     : "";
   const formClose = canVote
     ? `<div class="vote-submit">
         <button type="submit">${hasVoted ? "Change Vote" : "Cast Vote"}</button>
       </div></form>`
+    : "";
+
+  // Inline script for vote selection (only when user can vote)
+  const voteScript = canVote
+    ? `<script>
+(function() {
+  var form = document.querySelector('.vote-form');
+  if (!form) return;
+  var hiddenInput = form.querySelector('input[name="questionId"]');
+  var btn = form.querySelector('button[type="submit"]');
+  var currentVote = form.dataset.currentVote || '';
+  var options = form.querySelectorAll('.poll-option[data-question-id]');
+
+  // Disable button on load if user has a current vote (or no selection yet)
+  if (currentVote || !hiddenInput.value) {
+    btn.disabled = true;
+  }
+
+  function selectOption(el) {
+    var qid = el.dataset.questionId;
+    // Update hidden input
+    hiddenInput.value = qid;
+    // Toggle selected class
+    options.forEach(function(o) { o.classList.remove('option-selected'); });
+    if (qid !== currentVote) {
+      el.classList.add('option-selected');
+    }
+    // Enable/disable button
+    btn.disabled = (qid === currentVote);
+  }
+
+  options.forEach(function(opt) {
+    opt.addEventListener('click', function() { selectOption(opt); });
+    opt.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectOption(opt);
+      }
+    });
+  });
+})();
+</script>`
     : "";
 
   // Auth prompt if not logged in and poll is active
@@ -94,6 +130,7 @@ export function pollDetailPage(
     </div>
     ${formClose}
     ${voteMessage}
+    ${voteScript}
     <p class="poll-total dimmed">${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}</p>
     <p><a href="/" class="dimmed">&larr; Back to polls</a></p>
   `;

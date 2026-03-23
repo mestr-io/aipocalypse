@@ -418,33 +418,18 @@ label {
 /* === Voting Form === */
 
 .vote-form .poll-option {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
   cursor: pointer;
-}
-
-.vote-form .poll-option input[type="radio"] {
-  width: auto;
-  margin-top: 0.35rem;
-  accent-color: #00cc00;
-  cursor: pointer;
-}
-
-.vote-form .poll-option .option-content {
-  flex: 1;
-}
-
-.vote-form .poll-option label.option-label {
-  display: inline;
-  font-size: inherit;
-  color: #cccccc;
-  cursor: pointer;
-  margin-bottom: 0.25rem;
+  padding: 0.6rem 0.75rem;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .vote-form .poll-option:hover {
-  background: #1a1a2e;
+  background: rgba(0, 204, 0, 0.04);
+}
+
+.vote-form .poll-option:focus {
+  outline: 1px solid #009900;
+  outline-offset: -1px;
 }
 
 .vote-submit {
@@ -452,8 +437,15 @@ label {
   margin-bottom: 1rem;
 }
 
-.vote-marker {
-  font-size: 0.75rem;
+.vote-submit button:disabled {
+  color: #333340;
+  border-color: #333340;
+  cursor: not-allowed;
+}
+
+.vote-submit button:disabled:hover {
+  background: none;
+  color: #333340;
 }
 
 .vote-message {
@@ -461,8 +453,15 @@ label {
   margin-bottom: 0.5rem;
 }
 
-.poll-option.voted .option-label {
-  color: #ffff66;
+/* Current vote — server-rendered highlight (light green bg, no border) */
+.poll-option.option-current {
+  background: rgba(0, 204, 0, 0.06);
+}
+
+/* Pending selection — JS-applied highlight (green border + light green bg) */
+.poll-option.option-selected {
+  border: 1px solid #009900;
+  background: rgba(0, 204, 0, 0.08);
 }
 
 .poll-status {
