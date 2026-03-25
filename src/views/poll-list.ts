@@ -24,7 +24,7 @@ export function pollListPage(
 
     const statusBadge =
       p.status === "done"
-        ? `<span class="status status-done">Closed</span>`
+        ? `<span class="status status-done">Sealed</span>`
         : "";
 
     return `
@@ -41,18 +41,18 @@ export function pollListPage(
   const activePollsHtml =
     activePolls.length > 0
       ? activePolls.map(renderCard).join("")
-      : `<p class="dimmed">No active polls right now. Check back soon.</p>`;
+      : `<p class="dimmed">No active predictions right now. New questions drop regularly.</p>`;
 
   const donePollsHtml =
     donePolls.length > 0
       ? `
-        <h2 class="section-heading dimmed">Past Polls</h2>
+        <h2 class="section-heading dimmed">Past Predictions</h2>
         ${donePolls.map(renderCard).join("")}`
       : "";
 
   const content = `
     <h1>Welcome to <span class="green">AIPocalypse</span></h1>
-    <p>Community predictions on how agentic coding tools will reshape the developer profession.</p>
+    <p>Will AI agents replace us, augment us, or just mass-produce mediocre code? Cast your predictions before reality catches up.</p>
     <div class="poll-list">
       ${activePollsHtml}
     </div>

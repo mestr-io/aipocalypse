@@ -43,7 +43,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   </main>
   <footer>
     <div class="container">
-      <span class="dimmed">AIPocalypse — predicting the impact of agentic coding tools</span>
+      <span class="dimmed">AIPocalypse — placing bets on the future of code</span>
     </div>
   </footer>
 </body>

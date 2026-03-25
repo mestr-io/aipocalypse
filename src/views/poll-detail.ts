@@ -53,7 +53,7 @@ export function pollDetailPage(
     : "";
   const formClose = canVote
     ? `<div class="vote-submit">
-        <button type="submit">${hasVoted ? "Change Vote" : "Cast Vote"}</button>
+        <button type="submit">${hasVoted ? "Change Prediction" : "Lock In"}</button>
       </div></form>`
     : "";
 
@@ -103,19 +103,19 @@ export function pollDetailPage(
   const authPrompt =
     isActive && !user
       ? `<div class="auth-prompt">
-           <a href="/auth/login">Sign in with GitHub</a> to cast your vote
+           <a href="/auth/login">Sign in with GitHub</a> to place your bet
          </div>`
       : "";
 
   // Vote confirmation message
   const voteMessage = hasVoted
-    ? `<p class="vote-message dimmed">You have voted on this poll. You can change your vote anytime.</p>`
+    ? `<p class="vote-message dimmed">Your prediction is locked in. Change it anytime before the deadline.</p>`
     : "";
 
   // Status label for non-active polls
   const statusLabel =
     poll.status === "done"
-      ? `<p class="poll-status"><span class="status status-done">Closed</span></p>`
+      ? `<p class="poll-status"><span class="status status-done">Sealed</span></p>`
       : "";
 
   const content = `
@@ -132,7 +132,7 @@ export function pollDetailPage(
     ${voteMessage}
     ${voteScript}
     <p class="poll-total dimmed">${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}</p>
-    <p><a href="/" class="dimmed">&larr; Back to polls</a></p>
+    <p><a href="/" class="dimmed">&larr; Back to predictions</a></p>
   `;
 
   return layout(content, { title: poll.name, user });
