@@ -1,0 +1,1 @@
+No spec changes required. This adds a single query parameter (`prompt=select_account`) to the existing OAuth authorize URL. The auth flow contract is unchanged — login redirects to GitHub, callback exchanges the code, session cookie is set.

@@ -93,6 +93,7 @@ GET https://github.com/login/oauth/authorize
   &redirect_uri=https://mestr.io/labs/aipocalypse/auth/callback
   &scope=
   &state={random_string}
+  &prompt=select_account
 ```
 
 **Parameters:**
@@ -103,6 +104,7 @@ GET https://github.com/login/oauth/authorize
 | `redirect_uri` | `/auth/callback` (full URL) | Where GitHub sends the user back   |
 | `scope`        | Empty string                | Request only public profile access |
 | `state`        | Random unguessable string   | CSRF protection                    |
+| `prompt`       | `select_account`            | Force account picker on every login |
 
 The `state` value is generated per-request (e.g., 32-byte random hex) and stored in an HTTP-only cookie so it can be verified in the callback.
 

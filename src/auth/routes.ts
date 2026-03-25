@@ -54,6 +54,7 @@ auth.get("/login", (c) => {
     redirect_uri: callbackUrl,
     scope: "",
     state,
+    prompt: "select_account",
   });
 
   return c.redirect(`https://github.com/login/oauth/authorize?${params}`);
