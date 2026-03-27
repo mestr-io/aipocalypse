@@ -35,10 +35,6 @@ app.use("*", async (c, next) => {
     const userId = await verifySession(token);
     if (userId) {
       user = getUserById(userId);
-      // If user is banned, treat as not logged in
-      if (user?.isBanned) {
-        user = null;
-      }
     }
   }
 

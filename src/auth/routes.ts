@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { signSession, SESSION_COOKIE, STATE_COOKIE } from "./session";
-import { upsertUser, type GitHubProfile } from "../db/queries/users";
+import { upsertUser, isGithubIdBanned, type GitHubProfile } from "../db/queries/users";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -125,6 +125,11 @@ auth.get("/callback", async (c) => {
   }
 
   const profile = (await userRes.json()) as GitHubProfile;
+
+  // Reject banned users before upserting
+  if (isGithubIdBanned(profile.id)) {
+    return c.text("Your account has been banned.", 403);
+  }
 
   // Upsert user in DB — token is discarded after this
   const userId = upsertUser(profile);

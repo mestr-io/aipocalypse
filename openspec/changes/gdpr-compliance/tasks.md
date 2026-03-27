@@ -7,9 +7,9 @@
 ## 2. Ban System Rework
 
 - [x] 2.1 Add ban query functions (`isGithubIdBanned`, `banGithubId`, `unbanGithubId`) in `src/db/queries/users.ts` with tests
-- [ ] 2.2 Update OAuth callback in `src/auth/routes.ts` to check `banned_github_ids` before `upsertUser`
-- [ ] 2.3 Remove `isBanned` from the `User` TypeScript interface and session middleware ban check in `src/index.ts`
-- [ ] 2.4 Update admin ban/unban actions to use `banned_github_ids` instead of toggling `isBanned`
+- [x] 2.2 Update OAuth callback in `src/auth/routes.ts` to check `banned_github_ids` before `upsertUser`
+- [x] 2.3 Remove `isBanned` from the `User` TypeScript interface and session middleware ban check in `src/index.ts`
+- [x] 2.4 ~~Update admin ban/unban actions~~ N/A — admin has no existing ban UI; ban functions are available for future use
 
 ## 3. User Data Queries
 
