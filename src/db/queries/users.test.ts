@@ -163,28 +163,28 @@ describe("users", () => {
         ["A", "B"]
       );
       const rows = getDb()
-        .query<{ id: string }, [string]>(
+        .query(
           "SELECT id FROM questions WHERE pollId = ? ORDER BY position"
         )
-        .all(pollId);
+        .all(pollId) as { id: string }[];
       castVote(userId, pollId, rows[0]!.id);
 
       // Verify answer exists
       const before = getDb()
-        .query<{ id: string }, [string]>(
+        .query(
           "SELECT id FROM answers WHERE userId = ?"
         )
-        .all(userId);
+        .all(userId) as { id: string }[];
       expect(before).toHaveLength(1);
 
       // Delete user — answers should cascade
       hardDeleteUser(userId);
 
       const after = getDb()
-        .query<{ id: string }, [string]>(
+        .query(
           "SELECT id FROM answers WHERE userId = ?"
         )
-        .all(userId);
+        .all(userId) as { id: string }[];
       expect(after).toHaveLength(0);
     });
   });
@@ -219,10 +219,10 @@ describe("users", () => {
         ["Option X", "Option Y"]
       );
       const rows = getDb()
-        .query<{ id: string }, [string]>(
+        .query(
           "SELECT id FROM questions WHERE pollId = ? ORDER BY position"
         )
-        .all(pollId);
+        .all(pollId) as { id: string }[];
       castVote(userId, pollId, rows[0]!.id);
 
       const data = exportUserData(userId);

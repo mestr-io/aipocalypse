@@ -1,13 +1,14 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
-import { getCookie } from "hono/cookie";
-import { layout } from "./views/layout";
+import { getCookie, deleteCookie } from "hono/cookie";
 import { pollListPage } from "./views/poll-list";
 import { pollDetailPage } from "./views/poll-detail";
+import { privacyPage } from "./views/privacy";
+import { accountPage } from "./views/account";
 import { admin } from "./admin/routes";
 import { auth } from "./auth/routes";
 import { verifySession, SESSION_COOKIE } from "./auth/session";
-import { getUserById, type User } from "./db/queries/users";
+import { getUserById, exportUserData, hardDeleteUser, type User } from "./db/queries/users";
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
 import { castVote, getUserVote, isValidQuestion } from "./db/queries/votes";
 
@@ -67,6 +68,45 @@ app.get("/poll/:id", (c) => {
   const userVote = user ? getUserVote(user.id, id) : null;
 
   return c.html(pollDetailPage(poll, user, userVote));
+});
+
+// Privacy page
+app.get("/privacy", (c) => {
+  const user = c.get("user" as never) as User | null;
+  return c.html(privacyPage(user));
+});
+
+// ---------------------------------------------------------------------------
+// 3b. Account routes — require auth
+// ---------------------------------------------------------------------------
+
+// Account page
+app.get("/account", (c) => {
+  const user = c.get("user" as never) as User | null;
+  if (!user) return c.redirect("/auth/login");
+  return c.html(accountPage(user));
+});
+
+// Data export — JSON download
+app.get("/account/export", (c) => {
+  const user = c.get("user" as never) as User | null;
+  if (!user) return c.redirect("/auth/login");
+
+  const data = exportUserData(user.id);
+  if (!data) return c.text("User not found.", 404);
+
+  c.header("Content-Disposition", `attachment; filename="aipocalypse-data-${user.githubUser}.json"`);
+  return c.json(data);
+});
+
+// Account deletion
+app.post("/account/delete", (c) => {
+  const user = c.get("user" as never) as User | null;
+  if (!user) return c.redirect("/auth/login");
+
+  hardDeleteUser(user.id);
+  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  return c.redirect("/");
 });
 
 // ---------------------------------------------------------------------------

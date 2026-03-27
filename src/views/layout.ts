@@ -16,8 +16,8 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   const pageTitle = title === "AIPocalypse" ? title : `${title} — AIPocalypse`;
 
   const authSection = user
-    ? `<span class="user-info"><img src="${escapeHtml(user.avatarUrl)}" alt="" class="user-avatar"> <span class="dimmed">${escapeHtml(user.name)}</span></span> | <a href="/auth/logout">Logout</a>`
-    : `<a href="/auth/login">Sign in with GitHub</a>`;
+    ? `<span class="user-info"><img src="${escapeHtml(user.avatarUrl)}" alt="" class="user-avatar"> <span class="dimmed">${escapeHtml(user.name)}</span></span> | <a href="/account">Account</a> | <a href="/auth/logout">Logout</a>`
+    : `<a href="/auth/login">Sign in with GitHub</a> <span class="dimmed login-notice">(<a href="/privacy">we store minimal data</a>)</span>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -44,6 +44,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   <footer>
     <div class="container">
       <span class="dimmed">AIPocalypse — placing bets on the future of code</span>
+      <span class="dimmed"> | <a href="/privacy">Privacy</a></span>
     </div>
   </footer>
 </body>

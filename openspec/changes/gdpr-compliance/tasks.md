@@ -20,16 +20,16 @@
 
 ## 4. Privacy Page
 
-- [ ] 4.1 Create privacy page view template in `src/views/privacy.ts` with schema display, cookie listing, legal basis, user rights, and repo link
-- [ ] 4.2 Add `GET /privacy` route in `src/index.ts`
-- [ ] 4.3 Add footer "Privacy" link to the layout template in `src/views/layout.ts`
-- [ ] 4.4 Add brief data-policy note near the login link in the nav section of `src/views/layout.ts`
+- [x] 4.1 Create privacy page view template in `src/views/privacy.ts` with schema display, cookie listing, legal basis, user rights, and repo link
+- [x] 4.2 Add `GET /privacy` route in `src/index.ts`
+- [x] 4.3 Add footer "Privacy" link to the layout template in `src/views/layout.ts`
+- [x] 4.4 Add brief data-policy note near the login link in the nav section of `src/views/layout.ts`
 
 ## 5. Account Page (Export & Deletion)
 
-- [ ] 5.1 Create account page view template in `src/views/account.ts` with export button, deletion section, and confirmation flow
-- [ ] 5.2 Add `GET /account` route (authenticated, redirects to login if not), `GET /account/export`, and `POST /account/delete` routes in `src/index.ts`
-- [ ] 5.3 Add "Account" link to the nav bar for authenticated users in `src/views/layout.ts`
+- [x] 5.1 Create account page view template in `src/views/account.ts` with export button, deletion section, and confirmation flow
+- [x] 5.2 Add `GET /account` route (authenticated, redirects to login if not), `GET /account/export`, and `POST /account/delete` routes in `src/index.ts`
+- [x] 5.3 Add "Account" link to the nav bar for authenticated users in `src/views/layout.ts`
 
 ## 6. Final Verification
 
