@@ -42,7 +42,7 @@ export function runMigrations(migrationsDir: string = MIGRATIONS_DIR): void {
     const sql = readFileSync(join(migrationsDir, file), "utf-8");
 
     db.transaction(() => {
-      db.run(sql);
+      db.exec(sql);
       db.run("INSERT INTO _migrations (name, appliedAt) VALUES (?, ?)", [
         file,
         new Date().toISOString(),
