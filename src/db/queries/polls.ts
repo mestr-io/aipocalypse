@@ -145,7 +145,7 @@ export function listActivePolls(): ActivePollRow[] {
          p.id, p.name, p.body, p.dueDate, p.status, p.createdAt,
          COUNT(a.id) AS voteCount
        FROM polls p
-       LEFT JOIN answers a ON a.pollId = p.id AND a.deletedAt IS NULL
+       LEFT JOIN answers a ON a.pollId = p.id
        WHERE p.deletedAt IS NULL AND p.status = 'active'
        GROUP BY p.id
        ORDER BY p.createdAt DESC`
@@ -165,7 +165,7 @@ export function listPublicPolls(): ActivePollRow[] {
          p.id, p.name, p.body, p.dueDate, p.status, p.createdAt,
          COUNT(a.id) AS voteCount
        FROM polls p
-       LEFT JOIN answers a ON a.pollId = p.id AND a.deletedAt IS NULL
+       LEFT JOIN answers a ON a.pollId = p.id
        WHERE p.deletedAt IS NULL AND p.status IN ('active', 'done')
        GROUP BY p.id
        ORDER BY
@@ -201,7 +201,7 @@ export function getPollWithQuestions(pollId: string): PollDetail | null {
          q.id, q.body, q.position,
          COUNT(a.id) AS voteCount
        FROM questions q
-       LEFT JOIN answers a ON a.questionId = q.id AND a.deletedAt IS NULL
+       LEFT JOIN answers a ON a.questionId = q.id
        WHERE q.pollId = ? AND q.deletedAt IS NULL
        GROUP BY q.id
        ORDER BY q.position ASC`

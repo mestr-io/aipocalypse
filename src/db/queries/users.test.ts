@@ -1,7 +1,18 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { upsertUser, getUserById, type GitHubProfile } from "./users";
+import {
+  upsertUser,
+  getUserById,
+  isGithubIdBanned,
+  banGithubId,
+  unbanGithubId,
+  hardDeleteUser,
+  exportUserData,
+  type GitHubProfile,
+} from "./users";
+import { createPoll } from "./polls";
+import { castVote } from "./votes";
 import { runMigrations } from "../migrate";
 
 const TEST_DIR = join(import.meta.dirname!, "../../../.test-tmp");
@@ -28,6 +39,10 @@ const PROFILE: GitHubProfile = {
   avatar_url: "https://avatars.githubusercontent.com/u/12345?v=4",
 };
 
+// ---------------------------------------------------------------------------
+// upsertUser / getUserById
+// ---------------------------------------------------------------------------
+
 describe("users", () => {
   describe("upsertUser", () => {
     test("inserts a new user and returns their ID", () => {
@@ -41,8 +56,6 @@ describe("users", () => {
       expect(user!.name).toBe("The Octocat");
       expect(user!.githubUser).toBe("octocat");
       expect(user!.avatarUrl).toBe(PROFILE.avatar_url);
-      expect(user!.isBanned).toBe(0);
-      expect(user!.deletedAt).toBeNull();
     });
 
     test("uses login as name when name is null", () => {
@@ -76,24 +89,6 @@ describe("users", () => {
       expect(user!.githubUser).toBe("newlogin");
       expect(user!.avatarUrl).toBe("https://new-avatar.com/pic.png");
     });
-
-    test("restores soft-deleted user on re-login", () => {
-      const { getDb } = require("../index");
-      const id = upsertUser(PROFILE);
-      getDb().run("UPDATE users SET deletedAt = ? WHERE id = ?", [
-        new Date().toISOString(),
-        id,
-      ]);
-
-      // User should not be found
-      expect(getUserById(id)).toBeNull();
-
-      // Re-login should restore them
-      const id2 = upsertUser(PROFILE);
-      expect(id2).toBe(id);
-      expect(getUserById(id)).not.toBeNull();
-      expect(getUserById(id)!.deletedAt).toBeNull();
-    });
   });
 
   describe("getUserById", () => {
@@ -101,14 +96,140 @@ describe("users", () => {
       expect(getUserById("nonexistent")).toBeNull();
     });
 
-    test("returns null for soft-deleted user", () => {
-      const { getDb } = require("../index");
+    test("returns user for valid ID", () => {
       const id = upsertUser(PROFILE);
-      getDb().run("UPDATE users SET deletedAt = ? WHERE id = ?", [
-        new Date().toISOString(),
-        id,
-      ]);
+      const user = getUserById(id);
+      expect(user).not.toBeNull();
+      expect(user!.id).toBe(id);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Ban management
+  // ---------------------------------------------------------------------------
+
+  describe("ban management", () => {
+    test("isGithubIdBanned returns false for non-banned ID", () => {
+      expect(isGithubIdBanned(99999)).toBe(false);
+    });
+
+    test("banGithubId bans a GitHub ID", () => {
+      banGithubId(12345);
+      expect(isGithubIdBanned(12345)).toBe(true);
+    });
+
+    test("banGithubId is a no-op if already banned", () => {
+      banGithubId(12345);
+      banGithubId(12345); // should not throw
+      expect(isGithubIdBanned(12345)).toBe(true);
+    });
+
+    test("unbanGithubId removes the ban", () => {
+      banGithubId(12345);
+      expect(isGithubIdBanned(12345)).toBe(true);
+
+      unbanGithubId(12345);
+      expect(isGithubIdBanned(12345)).toBe(false);
+    });
+
+    test("unbanGithubId is a no-op if not banned", () => {
+      unbanGithubId(99999); // should not throw
+      expect(isGithubIdBanned(99999)).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // GDPR: hard delete
+  // ---------------------------------------------------------------------------
+
+  describe("hardDeleteUser", () => {
+    test("deletes a user and returns true", () => {
+      const id = upsertUser(PROFILE);
+      expect(hardDeleteUser(id)).toBe(true);
       expect(getUserById(id)).toBeNull();
+    });
+
+    test("returns false for non-existent user", () => {
+      expect(hardDeleteUser("nonexistent")).toBe(false);
+    });
+
+    test("cascades to answers", () => {
+      const { getDb } = require("../index");
+      const userId = upsertUser(PROFILE);
+
+      // Create a poll and cast a vote
+      const pollId = createPoll(
+        { title: "Test Poll", body: "", dueDate: null, status: "active" },
+        ["A", "B"]
+      );
+      const rows = getDb()
+        .query<{ id: string }, [string]>(
+          "SELECT id FROM questions WHERE pollId = ? ORDER BY position"
+        )
+        .all(pollId);
+      castVote(userId, pollId, rows[0]!.id);
+
+      // Verify answer exists
+      const before = getDb()
+        .query<{ id: string }, [string]>(
+          "SELECT id FROM answers WHERE userId = ?"
+        )
+        .all(userId);
+      expect(before).toHaveLength(1);
+
+      // Delete user — answers should cascade
+      hardDeleteUser(userId);
+
+      const after = getDb()
+        .query<{ id: string }, [string]>(
+          "SELECT id FROM answers WHERE userId = ?"
+        )
+        .all(userId);
+      expect(after).toHaveLength(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // GDPR: data export
+  // ---------------------------------------------------------------------------
+
+  describe("exportUserData", () => {
+    test("returns null for non-existent user", () => {
+      expect(exportUserData("nonexistent")).toBeNull();
+    });
+
+    test("exports user profile data", () => {
+      const id = upsertUser(PROFILE);
+      const data = exportUserData(id);
+      expect(data).not.toBeNull();
+      expect(data!.user.githubUser).toBe("octocat");
+      expect(data!.user.name).toBe("The Octocat");
+      expect(data!.user.avatarUrl).toBe(PROFILE.avatar_url);
+      expect(data!.user.createdAt).toBeTruthy();
+      expect(data!.exportedAt).toBeTruthy();
+      expect(data!.votes).toEqual([]);
+    });
+
+    test("exports user votes", () => {
+      const { getDb } = require("../index");
+      const userId = upsertUser(PROFILE);
+
+      const pollId = createPoll(
+        { title: "Export Poll", body: "", dueDate: null, status: "active" },
+        ["Option X", "Option Y"]
+      );
+      const rows = getDb()
+        .query<{ id: string }, [string]>(
+          "SELECT id FROM questions WHERE pollId = ? ORDER BY position"
+        )
+        .all(pollId);
+      castVote(userId, pollId, rows[0]!.id);
+
+      const data = exportUserData(userId);
+      expect(data!.votes).toHaveLength(1);
+      expect(data!.votes[0]!.poll).toBe("Export Poll");
+      expect(data!.votes[0]!.question).toBe("Option X");
+      expect(data!.votes[0]!.votedAt).toBeTruthy();
     });
   });
 });

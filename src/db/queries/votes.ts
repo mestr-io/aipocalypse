@@ -36,7 +36,7 @@ export function castVote(
   // Check for existing active answer for this user+poll
   const existing = db
     .query<{ id: string }, [string, string]>(
-      "SELECT id FROM answers WHERE userId = ? AND pollId = ? AND deletedAt IS NULL"
+      "SELECT id FROM answers WHERE userId = ? AND pollId = ?"
     )
     .get(userId, pollId);
 
@@ -71,7 +71,7 @@ export function getUserVote(
   const db = getDb();
   const row = db
     .query<{ questionId: string }, [string, string]>(
-      "SELECT questionId FROM answers WHERE userId = ? AND pollId = ? AND deletedAt IS NULL"
+      "SELECT questionId FROM answers WHERE userId = ? AND pollId = ?"
     )
     .get(userId, pollId);
 
