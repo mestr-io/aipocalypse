@@ -1,0 +1,33 @@
+# AIPocalypse — Podman Quadlet unit file
+#
+# Install as a rootless user service:
+#   cp aipocalypse.container ~/.config/containers/systemd/
+#   systemctl --user daemon-reload
+#   systemctl --user start aipocalypse
+#   systemctl --user enable aipocalypse
+#
+# Requires:
+#   - ~/aipocalypse/.env   (environment variables)
+#   - ~/aipocalypse/data/  (SQLite database volume)
+#
+# See docs/hosting.md for the full setup guide.
+
+[Unit]
+Description=AIPocalypse prediction poll app
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=docker.io/CHANGEME/aipocalypse:latest
+PublishPort=127.0.0.1:5555:5555
+Volume=%h/aipocalypse/data:/app/data:Z
+EnvironmentFile=%h/aipocalypse/.env
+Label=io.containers.autoupdate=registry
+AutoUpdate=registry
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target
