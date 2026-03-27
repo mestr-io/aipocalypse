@@ -1,0 +1,41 @@
+## ADDED Requirements
+
+### Requirement: Account page route
+The system SHALL serve an authenticated page at `GET /account` accessible only to logged-in users.
+
+#### Scenario: Authenticated user accesses account page
+- **WHEN** an authenticated user navigates to `/account`
+- **THEN** the page renders with data export and account deletion options
+
+#### Scenario: Unauthenticated user accesses account page
+- **WHEN** an unauthenticated user navigates to `/account`
+- **THEN** the user is redirected to `/auth/login`
+
+### Requirement: Data export
+The system SHALL allow authenticated users to download all their personal data as a JSON file.
+
+#### Scenario: Successful data export
+- **WHEN** an authenticated user requests `GET /account/export`
+- **THEN** the system returns a JSON response with `Content-Disposition: attachment`
+
+#### Scenario: Export JSON structure
+- **WHEN** an authenticated user downloads their data
+- **THEN** the JSON contains a `user` object (githubUser, name, avatarUrl, createdAt), a `votes` array, and an `exportedAt` timestamp
+
+### Requirement: Account deletion with confirmation
+The system SHALL allow authenticated users to permanently delete their account.
+
+#### Scenario: Confirmed deletion
+- **WHEN** an authenticated user confirms deletion via `POST /account/delete`
+- **THEN** the system hard-deletes the user row and all their answers, clears the session cookie, and redirects to `/`
+
+#### Scenario: Deletion cascades to votes
+- **WHEN** a user's account is deleted
+- **THEN** all rows in the `answers` table referencing that user are also deleted
+
+### Requirement: Account link in navigation
+The navigation bar SHALL include a link to `/account` for authenticated users.
+
+#### Scenario: Account link visible when logged in
+- **WHEN** an authenticated user views any page
+- **THEN** the navigation bar includes an "Account" link pointing to `/account`
