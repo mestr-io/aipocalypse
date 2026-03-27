@@ -10,19 +10,20 @@ All tables use **UUID v7** as their primary key (`id TEXT PRIMARY KEY`). UUID v7
 
 ### Timestamps
 
-Every table includes three timestamp columns:
+Every table includes two timestamp columns:
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `createdAt` | `TEXT NOT NULL` | ISO 8601 timestamp, set on insert |
 | `updatedAt` | `TEXT NOT NULL` | ISO 8601 timestamp, set on insert and every update |
-| `deletedAt` | `TEXT` | ISO 8601 timestamp, `NULL` when active, set on soft delete |
 
 Timestamps are stored as ISO 8601 strings (e.g., `2026-03-23T14:30:00.000Z`). SQLite has no native datetime type, so text comparison works for ordering and filtering.
 
-### Soft deletes
+### Soft deletes (polls and questions only)
 
-Records are never physically deleted. Instead, `deletedAt` is set to the current timestamp. **All queries must filter `WHERE deletedAt IS NULL`** unless explicitly dealing with deleted records (e.g., admin audit or recovery).
+The `polls` and `questions` tables use soft deletes via a `deletedAt TEXT` column — `NULL` when active, set to an ISO 8601 timestamp when soft-deleted. Queries on these tables must filter `WHERE deletedAt IS NULL` unless explicitly dealing with deleted records (e.g., admin listing).
+
+The `users` and `answers` tables do **not** use soft deletes. User deletion is a hard delete (with answers cascading via `ON DELETE CASCADE`) to comply with GDPR erasure requirements.
 
 ---
 
@@ -39,10 +40,8 @@ Represents an authenticated user via GitHub OAuth.
 | `name` | `TEXT` | `NOT NULL` | Display name (from GitHub profile) |
 | `githubUser` | `TEXT` | `NOT NULL UNIQUE` | GitHub username (login handle) |
 | `avatarUrl` | `TEXT` | `NOT NULL` | GitHub profile picture URL |
-| `isBanned` | `INTEGER` | `NOT NULL DEFAULT 0` | `0` = active, `1` = banned |
 | `createdAt` | `TEXT` | `NOT NULL` | When the user first logged in |
-| `updatedAt` | `TEXT` | `NOT NULL` | Last profile sync or admin action |
-| `deletedAt` | `TEXT` | | Soft delete timestamp |
+| `updatedAt` | `TEXT` | `NOT NULL` | Last profile sync |
 
 ### SQL
 
@@ -53,10 +52,8 @@ CREATE TABLE users (
   name TEXT NOT NULL,
   githubUser TEXT NOT NULL UNIQUE,
   avatarUrl TEXT NOT NULL,
-  isBanned INTEGER NOT NULL DEFAULT 0,
   createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL,
-  deletedAt TEXT
+  updatedAt TEXT NOT NULL
 );
 ```
 
@@ -64,9 +61,9 @@ CREATE TABLE users (
 
 - `githubId` is the stable identifier from GitHub. Usernames can change, but the numeric ID is permanent.
 - `githubUser` is stored for display and lookup, but `githubId` is the foreign key anchor.
-- `isBanned` is an integer because SQLite has no native boolean. `0` = false, `1` = true.
 - On each GitHub login, the server upserts by `githubId` — updating `name`, `githubUser`, and `avatarUrl` if they changed.
-- Banned users can still log in but cannot submit votes. The ban check happens at vote time.
+- **No soft deletes** — user deletion is a hard `DELETE` to comply with GDPR Art. 17 (right to erasure). Answers are removed via `ON DELETE CASCADE`.
+- Banning is handled by the separate `banned_github_ids` table, not a column on `users`. See below.
 - The GitHub access token is **not stored** in the database. See [docs/github-oauth.md](github-oauth.md) for the rationale.
 
 ---
@@ -185,41 +182,69 @@ Represents a user's vote — their selected option for a given poll.
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | `TEXT` | `PRIMARY KEY` | UUID v7 |
-| `userId` | `TEXT` | `NOT NULL REFERENCES users(id)` | Who voted |
+| `userId` | `TEXT` | `NOT NULL REFERENCES users(id) ON DELETE CASCADE` | Who voted |
 | `pollId` | `TEXT` | `NOT NULL REFERENCES polls(id)` | Which poll |
 | `questionId` | `TEXT` | `NOT NULL REFERENCES questions(id)` | Which option was selected |
 | `createdAt` | `TEXT` | `NOT NULL` | When the vote was cast |
 | `updatedAt` | `TEXT` | `NOT NULL` | Last modification (if vote change is allowed) |
-| `deletedAt` | `TEXT` | | Soft delete timestamp |
 
 ### SQL
 
 ```sql
 CREATE TABLE answers (
   id TEXT PRIMARY KEY,
-  userId TEXT NOT NULL REFERENCES users(id),
+  userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   pollId TEXT NOT NULL REFERENCES polls(id),
   questionId TEXT NOT NULL REFERENCES questions(id),
   createdAt TEXT NOT NULL,
-  updatedAt TEXT NOT NULL,
-  deletedAt TEXT
+  updatedAt TEXT NOT NULL
 );
 
-CREATE UNIQUE INDEX idx_answers_user_poll ON answers(userId, pollId) WHERE deletedAt IS NULL;
+CREATE UNIQUE INDEX idx_answers_user_poll ON answers(userId, pollId);
 CREATE INDEX idx_answers_pollId ON answers(pollId);
 CREATE INDEX idx_answers_questionId ON answers(questionId);
 ```
 
 ### Constraints
 
-- **One vote per user per poll**: enforced by the unique partial index on `(userId, pollId) WHERE deletedAt IS NULL`. A user can only have one active answer per poll.
+- **One vote per user per poll**: enforced by the unique index on `(userId, pollId)`. A user can only have one answer per poll.
+- **Cascade on user deletion**: when a user is deleted, all their answers are automatically removed via `ON DELETE CASCADE`.
 - `questionId` must reference a question that belongs to the same `pollId`. This is enforced in application code (not by a database constraint).
 
 ### Notes
 
 - When a user votes, an answer row is inserted. If they change their vote (while the poll is still `active`), the existing answer's `questionId` and `updatedAt` are updated — not deleted and re-inserted.
-- Banned users (`users.isBanned = 1`) are blocked from creating or updating answers. This is enforced in application code.
+- **No soft deletes** — answers are hard-deleted when the user exercises their GDPR right to erasure (cascading from user deletion).
+- Banned users (by GitHub ID in `banned_github_ids`) are blocked at login time — they cannot authenticate, so they cannot create or update answers.
 - Once a poll moves to `done` status, no new answers are accepted and existing answers cannot be modified.
+
+---
+
+## banned_github_ids
+
+Tracks banned GitHub accounts by their numeric ID. This is separate from the `users` table so bans persist even after account deletion and prevent re-registration.
+
+### Columns
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `githubId` | `INTEGER` | `PRIMARY KEY` | GitHub's numeric user ID |
+| `bannedAt` | `TEXT` | `NOT NULL` | ISO 8601 timestamp when the ban was applied |
+
+### SQL
+
+```sql
+CREATE TABLE banned_github_ids (
+  githubId INTEGER PRIMARY KEY,
+  bannedAt TEXT NOT NULL
+);
+```
+
+### Notes
+
+- The ban check happens during the OAuth callback, **before** the user is upserted. A banned GitHub ID cannot authenticate at all.
+- This table is keyed on `githubId` (not our internal UUID) so bans survive account deletion. If a banned user deletes their account and tries to re-register, the ban still applies.
+- Banning and unbanning are admin operations via `banGithubId()` and `unbanGithubId()` in `src/db/queries/users.ts`.
 
 ---
 
@@ -227,16 +252,19 @@ CREATE INDEX idx_answers_questionId ON answers(questionId);
 
 ```
 users 1──────────┐
-                  │
+                  │ ON DELETE CASCADE
                   ▼ (many)
 polls 1──┬──── answers
          │        ▲
          │        │
          ▼ (many) │
     questions ────┘
+
+banned_github_ids (standalone — keyed on githubId, not linked to users)
 ```
 
-- A **user** has many **answers** (one per poll).
+- A **user** has many **answers** (one per poll). Deleting a user cascades to all their answers.
 - A **poll** has many **questions** (the selectable options).
 - A **poll** has many **answers** (one per user).
 - An **answer** links one **user** to one **question** within one **poll**.
+- **banned_github_ids** is a standalone table — it references GitHub IDs, not internal user IDs, so bans persist across account deletion and re-registration.

@@ -157,21 +157,23 @@ Response (relevant fields):
 }
 ```
 
-4. **Upsert the user** — insert or update the `users` table keyed on `githubId`. Update `name`, `githubUser`, and `avatarUrl` on every login since these can change on GitHub's side.
+4. **Check ban status** — before upserting, check the `banned_github_ids` table for the user's GitHub `id`. If the GitHub ID is banned, reject the login with a 403 Forbidden response. This prevents banned users from creating new sessions.
 
-5. **Set the session** — store the user's `id` (our UUID v7, not the GitHub ID) in a signed, HTTP-only session cookie. Clear the `state` cookie.
+5. **Upsert the user** — insert or update the `users` table keyed on `githubId`. Update `name`, `githubUser`, and `avatarUrl` on every login since these can change on GitHub's side.
 
-6. **Redirect** — send the user to `/` (or wherever they came from).
+6. **Set the session** — store the user's `id` (our UUID v7, not the GitHub ID) in a signed, HTTP-only session cookie. Clear the `state` cookie.
+
+7. **Redirect** — send the user to `/` (or wherever they came from).
 
 ### Step 3 — Authenticated requests
 
-After login, the session cookie identifies the user. On each request to a protected route (`/vote/*`), the middleware:
+After login, the session cookie identifies the user. On each request to a protected route (`/vote/*`, `/account/*`), the middleware:
 
 1. Reads the session cookie.
 2. Looks up the user by `id`.
-3. Rejects the request if the user is not found, is banned, or the session is invalid.
+3. Rejects the request if the user is not found or the session is invalid.
 
-No GitHub API calls are needed for authenticated requests — the session is self-contained.
+Ban status is **not** checked on every request — it is only checked at login time (Step 2, item 4 above). If a user is banned while they have an active session, the ban takes effect on their next login attempt.
 
 ## Token storage decision
 
@@ -229,3 +231,4 @@ The session cookie contains only the user's ID. All other user data is fetched f
 - [ ] Session cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, and signed
 - [ ] Access token discarded after profile fetch — not stored in DB or session
 - [ ] `GITHUB_CLIENT_SECRET` never exposed in client-side code or logs
+- [ ] Banned GitHub IDs checked before user upsert — banned users cannot create sessions

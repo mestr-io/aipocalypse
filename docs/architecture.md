@@ -26,6 +26,10 @@ Bun provides:
 |-------------|---------|------|
 | `/` | Home page — all active polls grouped in a list | None |
 | `/poll/:id` | Individual poll page — results, voters, timeline | None (view) / GitHub OAuth (vote) |
+| `/privacy` | Privacy policy page — GDPR transparency | None |
+| `/account` | Account management — data export and deletion | GitHub OAuth (logged in) |
+| `/account/export` | Download personal data as JSON | GitHub OAuth (logged in) |
+| `/account/delete` | Permanently delete account (POST) | GitHub OAuth (logged in) |
 | `/auth/*` | GitHub OAuth flow (login, callback, logout) | None |
 | `/vote/*` | Voting endpoints (POST) | GitHub OAuth (logged in) |
 | `/admin/*` | Admin panel — poll CRUD, user management | Password (`ADMIN_PASSWORD` env var) |
@@ -33,8 +37,8 @@ Bun provides:
 ### Middleware stack
 
 1. **Static files** — serves `src/public/` assets (CSS, fonts).
-2. **Session** — cookie-based session handling for authenticated users.
-3. **Auth guard** — protects `/vote/*` routes; redirects to GitHub login if unauthenticated.
+2. **Session** — cookie-based session handling for authenticated users. Loads the user from the database by session ID. Does **not** check ban status (ban checks happen at login time only).
+3. **Auth guard** — protects `/vote/*` and `/account/*` routes; redirects to GitHub login if unauthenticated.
 4. **Admin guard** — protects `/admin/*` routes; requires password authentication.
 
 ## Pages and visibility
@@ -109,7 +113,9 @@ Migrations are plain SQL files stored in `src/db/migrations/` and executed in or
 
 ### Soft deletes
 
-All models use a `deletedAt` column. Records are never physically deleted — they are marked with a timestamp. All queries must filter on `deletedAt IS NULL` unless explicitly querying deleted records (e.g., admin recovery).
+The `polls` and `questions` tables use a `deletedAt` column. These records are never physically deleted — they are marked with a timestamp. Queries on these tables must filter on `deletedAt IS NULL` unless explicitly querying deleted records (e.g., admin recovery).
+
+The `users` and `answers` tables do **not** use soft deletes. User accounts are hard-deleted (with CASCADE to answers) to comply with GDPR data erasure requirements. The `banned_github_ids` table also has no soft delete — entries are inserted or removed directly.
 
 ### UUIDs
 
@@ -192,10 +198,13 @@ src/
   admin/                # Admin panel routes, middleware, views
   db/                   # Database module
     index.ts            # Database connection singleton
+    migrate.ts          # Migration runner (uses db.exec for multi-statement SQL)
     migrations/         # Sequential SQL migration files
     queries/            # Query functions grouped by model
   views/                # HTML template functions
     layout.ts           # Shared HTML shell (head, nav, footer)
+    privacy.ts          # Privacy policy page
+    account.ts          # Account management page (data export, deletion)
     pages/              # Individual page templates
   public/               # Static assets served directly
     style.css           # Advent of Code-inspired terminal aesthetic
@@ -203,6 +212,8 @@ data/                   # SQLite database file (gitignored)
 docs/                   # Extended documentation
   architecture.md       # This file
   models.md             # Database model reference
+  github-oauth.md       # GitHub OAuth flow reference
+  hosting.md            # Hetzner VPS deployment guide
 ```
 
 ## Design aesthetic
