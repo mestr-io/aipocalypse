@@ -109,13 +109,13 @@ Avoided unless strictly necessary. When needed (e.g., form interactions), it is 
 
 ### Migrations
 
-Migrations are plain SQL files stored in `src/db/migrations/` and executed in order via `bun run db:migrate`. Each migration file is named with a sequential prefix (e.g., `001_initial_schema.sql`).
+Migrations are plain SQL files or TypeScript files stored in `src/db/migrations/` and executed in order via `bun run db:migrate`. SQL files are named with a sequential prefix (e.g., `001_initial_schema.sql`). TypeScript migrations (`.ts`) must export a `migrate(db)` function and are used when application-level logic is needed during migration (e.g., computing hashes).
 
 ### Soft deletes
 
 The `polls` and `questions` tables use a `deletedAt` column. These records are never physically deleted — they are marked with a timestamp. Queries on these tables must filter on `deletedAt IS NULL` unless explicitly querying deleted records (e.g., admin recovery).
 
-The `users` and `answers` tables do **not** use soft deletes. User accounts are hard-deleted (with CASCADE to answers) to comply with GDPR data erasure requirements. The `banned_github_ids` table also has no soft delete — entries are inserted or removed directly.
+The `users` and `answers` tables do **not** use soft deletes. User accounts are hard-deleted (with CASCADE to answers) to comply with GDPR data erasure requirements. The `banned_hashed_ids` table also has no soft delete — entries are inserted or removed directly.
 
 ### UUIDs
 
@@ -129,10 +129,10 @@ Regular users authenticate via **GitHub OAuth Apps** using the standard authoriz
 
 1. User clicks "Sign in with GitHub" and is redirected to GitHub's authorization page.
 2. GitHub redirects back to `/auth/callback` with an authorization code.
-3. The server exchanges the code for an access token, fetches the user's GitHub profile, and upserts a record in the `users` table.
-4. A session cookie is set to keep the user logged in. The access token is discarded — it is not stored.
+3. The server exchanges the code for an access token, fetches the user's GitHub profile, computes an HMAC-SHA256 hash of the GitHub numeric ID, and upserts a record in the `users` table using only the hash.
+4. A session cookie is set to keep the user logged in. The access token and all profile data (name, username, avatar) are discarded — only the hash is stored.
 
-The app requests **no OAuth scopes**, giving read-only access to the user's public profile (id, login, name, avatar).
+The app requests **no OAuth scopes**, giving read-only access to the user's public profile. Only the numeric `id` field is used — all other profile fields are discarded after hash computation.
 
 For the full flow, endpoints, security considerations, and setup instructions, see **[docs/github-oauth.md](github-oauth.md)**.
 
@@ -185,6 +185,7 @@ bun test src/db/queries.test.ts
 | `GITHUB_CLIENT_ID` | Yes | GitHub OAuth app client ID | — |
 | `GITHUB_CLIENT_SECRET` | Yes | GitHub OAuth app client secret | — |
 | `ADMIN_PASSWORD` | Yes | Password for `/admin` panel | — |
+| `HASH_PEPPER` | Yes | HMAC key for hashing GitHub IDs. Generate with `openssl rand -hex 32`. Must be kept secret. | — |
 | `DATABASE_PATH` | No | Path to SQLite database file | `data/aipocalypse.db` |
 
 Copy `.env.example` to `.env` and fill in the values.

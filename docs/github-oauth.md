@@ -157,9 +157,9 @@ Response (relevant fields):
 }
 ```
 
-4. **Check ban status** — before upserting, check the `banned_github_ids` table for the user's GitHub `id`. If the GitHub ID is banned, reject the login with a 403 Forbidden response. This prevents banned users from creating new sessions.
+4. **Check ban status** — before upserting, compute `HMAC-SHA256(HASH_PEPPER, profile.id.toString())` truncated to 18 hex characters, then check the `banned_hashed_ids` table. If the hashed ID is banned, reject the login with a 403 Forbidden response.
 
-5. **Upsert the user** — insert or update the `users` table keyed on `githubId`. Update `name`, `githubUser`, and `avatarUrl` on every login since these can change on GitHub's side.
+5. **Upsert the user** — insert or update the `users` table keyed on `hashedId`. Only `updatedAt` is modified on returning users. No profile data (name, username, avatar) is stored — it is discarded after hash computation.
 
 6. **Set the session** — store the user's `id` (our UUID v7, not the GitHub ID) in a signed, HTTP-only session cookie. Clear the `state` cookie.
 
@@ -231,4 +231,4 @@ The session cookie contains only the user's ID. All other user data is fetched f
 - [ ] Session cookie is `HttpOnly`, `Secure`, `SameSite=Lax`, and signed
 - [ ] Access token discarded after profile fetch — not stored in DB or session
 - [ ] `GITHUB_CLIENT_SECRET` never exposed in client-side code or logs
-- [ ] Banned GitHub IDs checked before user upsert — banned users cannot create sessions
+- [ ] Banned hashed IDs checked before user upsert — banned users cannot create sessions

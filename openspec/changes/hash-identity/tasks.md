@@ -49,9 +49,9 @@
 
 ## 8. Documentation
 
-- [ ] 8.1 Update `docs/models.md` — new `users` schema, new `banned_hashed_ids` table, remove old columns
-- [ ] 8.2 Update `docs/architecture.md` — describe hash derivation in auth flow, updated header rendering
-- [ ] 8.3 Update `docs/github-oauth.md` — note that profile data is discarded after hash computation
+- [x] 8.1 Update `docs/models.md` — new `users` schema, new `banned_hashed_ids` table, remove old columns
+- [x] 8.2 Update `docs/architecture.md` — describe hash derivation in auth flow, updated header rendering
+- [x] 8.3 Update `docs/github-oauth.md` — note that profile data is discarded after hash computation
 
 ## 9. Testing and Verification
 

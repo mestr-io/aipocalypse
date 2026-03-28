@@ -29,29 +29,23 @@ The `users` and `answers` tables do **not** use soft deletes. User deletion is a
 
 ## users
 
-Represents an authenticated user via GitHub OAuth.
+Represents an authenticated user identified by a hashed GitHub ID.
 
 ### Columns
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | `TEXT` | `PRIMARY KEY` | UUID v7 |
-| `githubId` | `INTEGER` | `NOT NULL UNIQUE` | GitHub's numeric user ID |
-| `name` | `TEXT` | `NOT NULL` | Display name (from GitHub profile) |
-| `githubUser` | `TEXT` | `NOT NULL UNIQUE` | GitHub username (login handle) |
-| `avatarUrl` | `TEXT` | `NOT NULL` | GitHub profile picture URL |
+| `hashedId` | `TEXT` | `NOT NULL UNIQUE` | HMAC-SHA256 hash of GitHub numeric ID, truncated to 18 hex chars |
 | `createdAt` | `TEXT` | `NOT NULL` | When the user first logged in |
-| `updatedAt` | `TEXT` | `NOT NULL` | Last profile sync |
+| `updatedAt` | `TEXT` | `NOT NULL` | Last sign-in |
 
 ### SQL
 
 ```sql
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
-  githubId INTEGER NOT NULL UNIQUE,
-  name TEXT NOT NULL,
-  githubUser TEXT NOT NULL UNIQUE,
-  avatarUrl TEXT NOT NULL,
+  hashedId TEXT NOT NULL UNIQUE,
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL
 );
@@ -59,11 +53,11 @@ CREATE TABLE users (
 
 ### Notes
 
-- `githubId` is the stable identifier from GitHub. Usernames can change, but the numeric ID is permanent.
-- `githubUser` is stored for display and lookup, but `githubId` is the foreign key anchor.
-- On each GitHub login, the server upserts by `githubId` — updating `name`, `githubUser`, and `avatarUrl` if they changed.
+- `hashedId` is derived from the user's GitHub numeric ID using `HMAC-SHA256(HASH_PEPPER, githubId.toString())`, truncated to 18 hex characters (72 bits). The pepper is a server-side secret (`HASH_PEPPER` env var) that is never stored in the database.
+- No PII (name, username, avatar) is stored. The hash serves as the user's visual identity — split into three 6-character segments, each rendered as an HTML color.
+- On each GitHub login, the server computes the hash from the GitHub ID, upserts by `hashedId`, and updates only `updatedAt`.
 - **No soft deletes** — user deletion is a hard `DELETE` to comply with GDPR Art. 17 (right to erasure). Answers are removed via `ON DELETE CASCADE`.
-- Banning is handled by the separate `banned_github_ids` table, not a column on `users`. See below.
+- Banning is handled by the separate `banned_hashed_ids` table, not a column on `users`. See below.
 - The GitHub access token is **not stored** in the database. See [docs/github-oauth.md](github-oauth.md) for the rationale.
 
 ---
@@ -215,36 +209,36 @@ CREATE INDEX idx_answers_questionId ON answers(questionId);
 
 - When a user votes, an answer row is inserted. If they change their vote (while the poll is still `active`), the existing answer's `questionId` and `updatedAt` are updated — not deleted and re-inserted.
 - **No soft deletes** — answers are hard-deleted when the user exercises their GDPR right to erasure (cascading from user deletion).
-- Banned users (by GitHub ID in `banned_github_ids`) are blocked at login time — they cannot authenticate, so they cannot create or update answers.
+- Banned users (by hashed ID in `banned_hashed_ids`) are blocked at login time — they cannot authenticate, so they cannot create or update answers.
 - Once a poll moves to `done` status, no new answers are accepted and existing answers cannot be modified.
 
 ---
 
-## banned_github_ids
+## banned_hashed_ids
 
-Tracks banned GitHub accounts by their numeric ID. This is separate from the `users` table so bans persist even after account deletion and prevent re-registration.
+Tracks banned users by their hashed identity. This is separate from the `users` table so bans persist even after account deletion and prevent re-registration.
 
 ### Columns
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| `githubId` | `INTEGER` | `PRIMARY KEY` | GitHub's numeric user ID |
+| `hashedId` | `TEXT` | `PRIMARY KEY` | HMAC hash of GitHub numeric ID (same derivation as `users.hashedId`) |
 | `bannedAt` | `TEXT` | `NOT NULL` | ISO 8601 timestamp when the ban was applied |
 
 ### SQL
 
 ```sql
-CREATE TABLE banned_github_ids (
-  githubId INTEGER PRIMARY KEY,
+CREATE TABLE banned_hashed_ids (
+  hashedId TEXT PRIMARY KEY,
   bannedAt TEXT NOT NULL
 );
 ```
 
 ### Notes
 
-- The ban check happens during the OAuth callback, **before** the user is upserted. A banned GitHub ID cannot authenticate at all.
-- This table is keyed on `githubId` (not our internal UUID) so bans survive account deletion. If a banned user deletes their account and tries to re-register, the ban still applies.
-- Banning and unbanning are admin operations via `banGithubId()` and `unbanGithubId()` in `src/db/queries/users.ts`.
+- The ban check happens during the OAuth callback, **before** the user is upserted. The server computes the hash from the GitHub profile ID and checks it against this table. A banned hash cannot authenticate at all.
+- This table is keyed on `hashedId` (not our internal UUID) so bans survive account deletion. If a banned user deletes their account and tries to re-register, the ban still applies.
+- Banning and unbanning are admin operations via `banHashedId()` and `unbanHashedId()` in `src/db/queries/users.ts`.
 
 ---
 
@@ -260,11 +254,11 @@ polls 1──┬──── answers
          ▼ (many) │
     questions ────┘
 
-banned_github_ids (standalone — keyed on githubId, not linked to users)
+banned_hashed_ids (standalone — keyed on hashedId, not linked to users)
 ```
 
 - A **user** has many **answers** (one per poll). Deleting a user cascades to all their answers.
 - A **poll** has many **questions** (the selectable options).
 - A **poll** has many **answers** (one per user).
 - An **answer** links one **user** to one **question** within one **poll**.
-- **banned_github_ids** is a standalone table — it references GitHub IDs, not internal user IDs, so bans persist across account deletion and re-registration.
+- **banned_hashed_ids** is a standalone table — it references hashed identities, not internal user IDs, so bans persist across account deletion and re-registration.
