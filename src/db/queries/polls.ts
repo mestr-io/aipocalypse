@@ -10,6 +10,7 @@ export interface CreatePollInput {
   body: string;
   dueDate: string | null;
   status: string;
+  links?: string;
 }
 
 export interface PollRow {
@@ -18,6 +19,7 @@ export interface PollRow {
   body: string;
   dueDate: string;
   status: string;
+  links: string;
   createdAt: string;
   updatedAt: string;
   questionCount: number;
@@ -47,6 +49,7 @@ export interface PollDetail {
   body: string;
   dueDate: string;
   status: string;
+  links: string;
   createdAt: string;
   questions: QuestionWithVotes[];
   totalVotes: number;
@@ -64,6 +67,7 @@ export interface PollForEdit {
   body: string;
   dueDate: string;
   status: string;
+  links: string;
   questions: QuestionRow[];
 }
 
@@ -87,14 +91,15 @@ export function createPoll(input: CreatePollInput, answers: string[]): string {
 
   db.transaction(() => {
     db.run(
-      `INSERT INTO polls (id, name, body, dueDate, status, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO polls (id, name, body, dueDate, status, links, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         pollId,
         input.title,
         input.body,
         input.dueDate ?? "",
         input.status,
+        input.links ?? "",
         now,
         now,
       ]
@@ -122,7 +127,7 @@ export function listPolls(): PollRow[] {
   return db
     .query<PollRow, []>(
       `SELECT
-         p.id, p.name, p.body, p.dueDate, p.status, p.createdAt, p.updatedAt,
+         p.id, p.name, p.body, p.dueDate, p.status, p.links, p.createdAt, p.updatedAt,
          p.deletedAt,
          COUNT(q.id) AS questionCount
        FROM polls p
@@ -184,10 +189,10 @@ export function getPollWithQuestions(pollId: string): PollDetail | null {
 
   const poll = db
     .query<
-      { id: string; name: string; body: string; dueDate: string; status: string; createdAt: string },
+      { id: string; name: string; body: string; dueDate: string; status: string; links: string; createdAt: string },
       [string]
     >(
-      `SELECT id, name, body, dueDate, status, createdAt
+      `SELECT id, name, body, dueDate, status, links, createdAt
        FROM polls
        WHERE id = ? AND deletedAt IS NULL`
     )
@@ -226,10 +231,10 @@ export function getPollForEdit(pollId: string): PollForEdit | null {
 
   const poll = db
     .query<
-      { id: string; name: string; body: string; dueDate: string; status: string },
+      { id: string; name: string; body: string; dueDate: string; status: string; links: string },
       [string]
     >(
-      `SELECT id, name, body, dueDate, status
+      `SELECT id, name, body, dueDate, status, links
        FROM polls
        WHERE id = ? AND deletedAt IS NULL`
     )
@@ -276,9 +281,9 @@ export function updatePoll(
   db.transaction(() => {
     // Update poll metadata
     db.run(
-      `UPDATE polls SET name = ?, body = ?, dueDate = ?, status = ?, updatedAt = ?
+      `UPDATE polls SET name = ?, body = ?, dueDate = ?, status = ?, links = ?, updatedAt = ?
        WHERE id = ?`,
-      [input.title, input.body, input.dueDate ?? "", input.status, now, pollId]
+      [input.title, input.body, input.dueDate ?? "", input.status, input.links ?? "", now, pollId]
     );
 
     // Get current active question IDs for this poll

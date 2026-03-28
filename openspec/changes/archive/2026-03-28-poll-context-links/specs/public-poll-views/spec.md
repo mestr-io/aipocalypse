@@ -1,19 +1,4 @@
-## Requirements
-
-### Requirement: Active poll list on home page
-The application SHALL display a list of all active polls on the home page (`GET /`). Each poll entry SHALL show the poll title, a preview of the description, the due date, and the total number of votes cast.
-
-#### Scenario: Home page with active polls
-- **WHEN** a browser requests `GET /` and active polls exist
-- **THEN** the server responds with an HTML page listing each active poll with its title (as a link to the poll detail), description preview (first 120 characters), due date, and total vote count
-
-#### Scenario: Home page with no active polls
-- **WHEN** a browser requests `GET /` and no active polls exist
-- **THEN** the page displays a message indicating no polls are currently active
-
-#### Scenario: Hidden and done polls are excluded
-- **WHEN** a browser requests `GET /` and polls with status `hidden` or `done` exist
-- **THEN** those polls are NOT included in the list
+## MODIFIED Requirements
 
 ### Requirement: Poll detail page
 The application SHALL render a poll detail page at `GET /poll/:id` showing the poll title, full description, context links (if any), due date, and all answer options with vote distribution displayed as AoC-style progress bars. Each option SHALL be rendered as a clickable div (not a radio button). The user's current vote SHALL be indicated by a light green background. No radio buttons or gold chevron markers SHALL be used. If the poll has context links, they SHALL be rendered as a list of clickable `<a>` elements between the poll body and the voting options. Each link SHALL open in a new browser tab (`target="_blank"`) with `rel="noopener noreferrer"`.
@@ -78,13 +63,6 @@ The application SHALL render a poll detail page at `GET /poll/:id` showing the p
 - **WHEN** the links field contains lines that do not match the `[Label](url)` format
 - **THEN** those lines are silently ignored and only valid `[Label](url)` entries are rendered
 
-### Requirement: Active polls query function
-The application SHALL provide a `listActivePolls()` function that returns all active polls with their total vote counts.
-
-#### Scenario: List active polls with vote counts
-- **WHEN** `listActivePolls()` is called
-- **THEN** all non-deleted polls with status `active` are returned ordered by creation date descending, each including a `voteCount` field with the total number of non-deleted answers
-
 ### Requirement: Poll with questions and votes query function
 The application SHALL provide a `getPollWithQuestions(pollId)` function that returns a single poll with its questions, per-question vote counts, and context links.
 
@@ -95,18 +73,3 @@ The application SHALL provide a `getPollWithQuestions(pollId)` function that ret
 #### Scenario: Poll not found
 - **WHEN** `getPollWithQuestions(pollId)` is called with a non-existent or soft-deleted poll ID
 - **THEN** the function returns `null`
-
-### Requirement: Client-side vote selection interaction
-The poll detail page SHALL include an inline `<script>` block that handles option selection via click events on option divs. The script SHALL manage a hidden `<input name="questionId">` field, toggle CSS classes (`option-selected`) on option divs, and enable/disable the submit button based on whether the selected option differs from the user's current vote. The script SHALL also support keyboard interaction (Enter/Space) on focused option divs via `tabindex="0"`.
-
-#### Scenario: Click on option div updates hidden input
-- **WHEN** user clicks on a `.poll-option` div with `data-question-id` attribute
-- **THEN** the hidden input's value SHALL be set to that option's `data-question-id`
-
-#### Scenario: Keyboard activation of option
-- **WHEN** user focuses a `.poll-option` div and presses Enter or Space
-- **THEN** the option SHALL be selected as if it were clicked
-
-#### Scenario: Only one option selected at a time
-- **WHEN** user clicks on an option
-- **THEN** the `option-selected` class SHALL be removed from all other options and added only to the clicked option

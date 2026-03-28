@@ -69,6 +69,7 @@ admin.post("/polls", async (c) => {
   const bodyText = typeof body.body === "string" ? body.body.trim() : "";
   const dueDate = typeof body.dueDate === "string" ? body.dueDate.trim() : "";
   const status = typeof body.status === "string" ? body.status : "hidden";
+  const links = typeof body.links === "string" ? body.links.trim() : "";
 
   // Collect answers — parseBody with `all: true` returns arrays for repeated fields
   const rawAnswers = body["answers[]"];
@@ -89,7 +90,7 @@ admin.post("/polls", async (c) => {
     return c.html(
       adminPollFormPage({
         error: errors.join(" "),
-        values: { title, body: bodyText, dueDate, status, answers: answers.map((a) => ({ text: a })) },
+        values: { title, body: bodyText, dueDate, status, links, answers: answers.map((a) => ({ text: a })) },
       }),
       400
     );
@@ -101,6 +102,7 @@ admin.post("/polls", async (c) => {
       body: bodyText,
       dueDate: dueDate || null,
       status,
+      links,
     },
     answers
   );
@@ -128,6 +130,7 @@ admin.get("/polls/:id/edit", (c) => {
         body: poll.body,
         dueDate: poll.dueDate,
         status: poll.status,
+        links: poll.links,
         answers: poll.questions.map((q) => ({ id: q.id, text: q.body })),
       },
     })
@@ -149,6 +152,7 @@ admin.post("/polls/:id", async (c) => {
   const bodyText = typeof body.body === "string" ? body.body.trim() : "";
   const dueDate = typeof body.dueDate === "string" ? body.dueDate.trim() : "";
   const status = typeof body.status === "string" ? body.status : "hidden";
+  const links = typeof body.links === "string" ? body.links.trim() : "";
 
   const rawAnswers = body["answers[]"];
   const rawAnswerIds = body["answerIds[]"];
@@ -180,7 +184,7 @@ admin.post("/polls/:id", async (c) => {
       adminPollFormPage({
         pollId,
         error: errors.join(" "),
-        values: { title, body: bodyText, dueDate, status, answers: answerPairs },
+        values: { title, body: bodyText, dueDate, status, links, answers: answerPairs },
       }),
       400
     );
@@ -193,6 +197,7 @@ admin.post("/polls/:id", async (c) => {
       body: bodyText,
       dueDate: dueDate || null,
       status,
+      links,
     },
     answerPairs
   );

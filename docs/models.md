@@ -75,6 +75,7 @@ Represents a prediction poll with a due date.
 | `body` | `TEXT` | `NOT NULL` | Full question text with context and markdown-safe description |
 | `dueDate` | `TEXT` | `NOT NULL` | ISO 8601 date when the prediction can be evaluated |
 | `status` | `TEXT` | `NOT NULL DEFAULT 'hidden'` | One of: `hidden`, `active`, `done` |
+| `links` | `TEXT` | `NOT NULL DEFAULT ''` | Markdown-formatted context links, one `[Label](url)` per line |
 | `createdAt` | `TEXT` | `NOT NULL` | When the poll was created |
 | `updatedAt` | `TEXT` | `NOT NULL` | Last edit |
 | `deletedAt` | `TEXT` | | Soft delete timestamp |
@@ -88,6 +89,7 @@ CREATE TABLE polls (
   body TEXT NOT NULL,
   dueDate TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'hidden' CHECK (status IN ('hidden', 'active', 'done')),
+  links TEXT NOT NULL DEFAULT '',
   createdAt TEXT NOT NULL,
   updatedAt TEXT NOT NULL,
   deletedAt TEXT

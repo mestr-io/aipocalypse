@@ -520,3 +520,87 @@ describe("updatePoll", () => {
     expect(success).toBe(false);
   });
 });
+
+describe("poll links field", () => {
+  test("createPoll stores links value", () => {
+    const links = "[Article](https://example.com)\n[Report](https://other.com)";
+    const pollId = createPoll(
+      { title: "Poll With Links", body: "Body", dueDate: "", status: "hidden", links },
+      ["A", "B"]
+    );
+
+    const db = new Database(TEST_DB_PATH, { readonly: true });
+    const row = db.query<{ links: string }, [string]>("SELECT links FROM polls WHERE id = ?").get(pollId);
+    db.close();
+
+    expect(row!.links).toBe(links);
+  });
+
+  test("createPoll without links defaults to empty string", () => {
+    const pollId = createPoll(
+      { title: "No Links", body: "", dueDate: "", status: "hidden" },
+      ["A", "B"]
+    );
+
+    const db = new Database(TEST_DB_PATH, { readonly: true });
+    const row = db.query<{ links: string }, [string]>("SELECT links FROM polls WHERE id = ?").get(pollId);
+    db.close();
+
+    expect(row!.links).toBe("");
+  });
+
+  test("getPollWithQuestions returns links field", () => {
+    const links = "[Link](https://example.com)";
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "active", links },
+      ["A", "B"]
+    );
+
+    const result = getPollWithQuestions(pollId);
+    expect(result!.links).toBe(links);
+  });
+
+  test("getPollForEdit returns links field", () => {
+    const links = "[Link](https://example.com)";
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden", links },
+      ["A", "B"]
+    );
+
+    const result = getPollForEdit(pollId);
+    expect(result!.links).toBe(links);
+  });
+
+  test("updatePoll persists links value", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden", links: "" },
+      ["A", "B"]
+    );
+
+    const newLinks = "[New Link](https://new.example.com)";
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden", links: newLinks },
+      [{ text: "A" }, { text: "B" }]
+    );
+
+    const result = getPollForEdit(pollId);
+    expect(result!.links).toBe(newLinks);
+  });
+
+  test("updatePoll without links defaults to empty string", () => {
+    const pollId = createPoll(
+      { title: "Poll", body: "", dueDate: "", status: "hidden", links: "[Old](https://old.com)" },
+      ["A", "B"]
+    );
+
+    updatePoll(
+      pollId,
+      { title: "Poll", body: "", dueDate: null, status: "hidden" },
+      [{ text: "A" }, { text: "B" }]
+    );
+
+    const result = getPollForEdit(pollId);
+    expect(result!.links).toBe("");
+  });
+});
