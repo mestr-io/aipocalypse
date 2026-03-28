@@ -7,13 +7,13 @@
 
 ## 2. Database Migration
 
-- [ ] 2.1 Create migration SQL file that adds `hashedId TEXT` column to `users` table
-- [ ] 2.2 Implement post-SQL migration step that computes hashes for all existing users (read `githubId`, compute HMAC, write `hashedId`)
-- [ ] 2.3 Create migration step to rebuild `users` table with only `id`, `hashedId`, `createdAt`, `updatedAt` (dropping PII columns, adding NOT NULL and UNIQUE constraints on `hashedId`)
-- [ ] 2.4 Create `banned_hashed_ids` table (`hashedId TEXT PRIMARY KEY`, `bannedAt TEXT NOT NULL`)
-- [ ] 2.5 Migrate existing `banned_github_ids` entries — hash each `githubId` and insert into `banned_hashed_ids`
-- [ ] 2.6 Drop `banned_github_ids` table
-- [ ] 2.7 Add migration guard — abort with clear error if `HASH_PEPPER` is not set
+- [x] 2.1 Create migration SQL file that adds `hashedId TEXT` column to `users` table
+- [x] 2.2 Implement post-SQL migration step that computes hashes for all existing users (read `githubId`, compute HMAC, write `hashedId`)
+- [x] 2.3 Create migration step to rebuild `users` table with only `id`, `hashedId`, `createdAt`, `updatedAt` (dropping PII columns, adding NOT NULL and UNIQUE constraints on `hashedId`)
+- [x] 2.4 Create `banned_hashed_ids` table (`hashedId TEXT PRIMARY KEY`, `bannedAt TEXT NOT NULL`)
+- [x] 2.5 Migrate existing `banned_github_ids` entries — hash each `githubId` and insert into `banned_hashed_ids`
+- [x] 2.6 Drop `banned_github_ids` table
+- [x] 2.7 Add migration guard — abort with clear error if `HASH_PEPPER` is not set
 
 ## 3. User Queries Rewrite
 
