@@ -17,13 +17,15 @@ export function privacyPage(user: User | null = null): string {
 
     <pre><code>CREATE TABLE users (
   id         TEXT PRIMARY KEY,   -- internal UUID
-  githubId   INTEGER NOT NULL,   -- your GitHub numeric ID
-  name       TEXT NOT NULL,      -- display name
-  githubUser TEXT NOT NULL,      -- GitHub username
-  avatarUrl  TEXT NOT NULL,      -- avatar URL from GitHub
+  hashedId   TEXT NOT NULL,      -- HMAC hash of your GitHub ID
   createdAt  TEXT NOT NULL,      -- when you first signed in
-  updatedAt  TEXT NOT NULL       -- last profile update
+  updatedAt  TEXT NOT NULL       -- last sign-in
 );</code></pre>
+
+    <p>We do <strong>not</strong> store your GitHub username, display name, avatar,
+    or any other profile information. Your GitHub numeric ID is hashed with a
+    server-side secret (HMAC-SHA256) and only the hash is stored. This hash
+    is your visual identity on the site, shown as three colored segments.</p>
 
     <p>When you vote on a poll, we store your vote:</p>
 
@@ -37,7 +39,7 @@ export function privacyPage(user: User | null = null): string {
 );</code></pre>
 
     <p>We do <strong>not</strong> store your GitHub access token. It is used once during login
-    to fetch your profile and then discarded.</p>
+    to fetch your numeric ID for hashing and then discarded.</p>
 
     <h2>Cookies</h2>
 

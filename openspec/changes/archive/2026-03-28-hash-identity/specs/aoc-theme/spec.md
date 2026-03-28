@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Advent of Code visual theme
 The CSS SHALL implement a visual style inspired by Advent of Code with the following properties:
@@ -38,14 +38,3 @@ The header for logged-in users SHALL display the user's three-color hash identit
 #### Scenario: Logged-out header unchanged
 - **WHEN** a logged-out user views any page
 - **THEN** the header displays the login link as before
-
-### Requirement: Deleted poll row styling
-The CSS SHALL provide styling for soft-deleted poll rows in the admin dashboard. Deleted rows SHALL have strikethrough text on the title and a muted visual treatment to distinguish them from active polls.
-
-#### Scenario: Deleted row renders with strikethrough
-- **WHEN** a poll row has the `.deleted-row` class
-- **THEN** the poll title text has `text-decoration: line-through` and the row has reduced opacity or muted coloring
-
-#### Scenario: Deleted status badge
-- **WHEN** a poll has been soft-deleted
-- **THEN** a `[deleted]` badge is displayed in a muted red color (`#aa4444`)

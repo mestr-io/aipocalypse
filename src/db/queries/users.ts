@@ -7,26 +7,14 @@ import { generateUUIDv7 } from "../uuid";
 
 export interface User {
   id: string;
-  githubId: number;
-  name: string;
-  githubUser: string;
-  avatarUrl: string;
+  hashedId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface GitHubProfile {
-  id: number;
-  login: string;
-  name: string | null;
-  avatar_url: string;
-}
-
 export interface UserExport {
   user: {
-    githubUser: string;
-    name: string;
-    avatarUrl: string;
+    hashedId: string;
     createdAt: string;
   };
   votes: Array<{
@@ -53,32 +41,27 @@ export function getUserById(id: string): User | null {
 }
 
 /**
- * Upsert a user from their GitHub profile.
+ * Upsert a user from their hashed identity.
  *
- * If a user with the given githubId exists, update their name, username,
- * and avatar (these can change on GitHub's side).
- *
+ * If a user with the given hashedId exists, update their updatedAt timestamp.
  * Returns the user's internal UUID.
  */
-export function upsertUser(profile: GitHubProfile): string {
+export function upsertUser(hashedId: string): string {
   const db = getDb();
   const now = new Date().toISOString();
-  const displayName = profile.name || profile.login;
 
   // Check if user already exists
   const existing = db
-    .query<{ id: string }, [number]>(
-      "SELECT id FROM users WHERE githubId = ?"
+    .query<{ id: string }, [string]>(
+      "SELECT id FROM users WHERE hashedId = ?"
     )
-    .get(profile.id);
+    .get(hashedId);
 
   if (existing) {
-    // Update profile fields
+    // Update timestamp only
     db.run(
-      `UPDATE users
-       SET name = ?, githubUser = ?, avatarUrl = ?, updatedAt = ?
-       WHERE githubId = ?`,
-      [displayName, profile.login, profile.avatar_url, now, profile.id]
+      `UPDATE users SET updatedAt = ? WHERE hashedId = ?`,
+      [now, hashedId]
     );
     return existing.id;
   }
@@ -86,48 +69,48 @@ export function upsertUser(profile: GitHubProfile): string {
   // Insert new user
   const userId = generateUUIDv7();
   db.run(
-    `INSERT INTO users (id, githubId, name, githubUser, avatarUrl, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [userId, profile.id, displayName, profile.login, profile.avatar_url, now, now]
+    `INSERT INTO users (id, hashedId, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?)`,
+    [userId, hashedId, now, now]
   );
 
   return userId;
 }
 
 // ---------------------------------------------------------------------------
-// Ban management (uses banned_github_ids table)
+// Ban management (uses banned_hashed_ids table)
 // ---------------------------------------------------------------------------
 
 /**
- * Check if a GitHub ID is banned.
+ * Check if a hashed ID is banned.
  */
-export function isGithubIdBanned(githubId: number): boolean {
+export function isHashedIdBanned(hashedId: string): boolean {
   const db = getDb();
   const row = db
-    .query<{ githubId: number }, [number]>(
-      "SELECT githubId FROM banned_github_ids WHERE githubId = ?"
+    .query<{ hashedId: string }, [string]>(
+      "SELECT hashedId FROM banned_hashed_ids WHERE hashedId = ?"
     )
-    .get(githubId);
+    .get(hashedId);
   return !!row;
 }
 
 /**
- * Ban a GitHub ID. If already banned, this is a no-op.
+ * Ban a hashed ID. If already banned, this is a no-op.
  */
-export function banGithubId(githubId: number): void {
+export function banHashedId(hashedId: string): void {
   const db = getDb();
   db.run(
-    "INSERT OR IGNORE INTO banned_github_ids (githubId, bannedAt) VALUES (?, ?)",
-    [githubId, new Date().toISOString()]
+    "INSERT OR IGNORE INTO banned_hashed_ids (hashedId, bannedAt) VALUES (?, ?)",
+    [hashedId, new Date().toISOString()]
   );
 }
 
 /**
- * Unban a GitHub ID.
+ * Unban a hashed ID.
  */
-export function unbanGithubId(githubId: number): void {
+export function unbanHashedId(hashedId: string): void {
   const db = getDb();
-  db.run("DELETE FROM banned_github_ids WHERE githubId = ?", [githubId]);
+  db.run("DELETE FROM banned_hashed_ids WHERE hashedId = ?", [hashedId]);
 }
 
 // ---------------------------------------------------------------------------
@@ -173,9 +156,7 @@ export function exportUserData(userId: string): UserExport | null {
 
   return {
     user: {
-      githubUser: user.githubUser,
-      name: user.name,
-      avatarUrl: user.avatarUrl,
+      hashedId: user.hashedId,
       createdAt: user.createdAt,
     },
     votes: votes.map((v) => ({

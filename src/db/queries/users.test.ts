@@ -4,12 +4,11 @@ import { join } from "node:path";
 import {
   upsertUser,
   getUserById,
-  isGithubIdBanned,
-  banGithubId,
-  unbanGithubId,
+  isHashedIdBanned,
+  banHashedId,
+  unbanHashedId,
   hardDeleteUser,
   exportUserData,
-  type GitHubProfile,
 } from "./users";
 import { createPoll } from "./polls";
 import { castVote } from "./votes";
@@ -22,6 +21,7 @@ beforeEach(() => {
   rmSync(TEST_DIR, { recursive: true, force: true });
   mkdirSync(TEST_DIR, { recursive: true });
   process.env.DATABASE_PATH = TEST_DB_PATH;
+  process.env.HASH_PEPPER = "test-pepper-for-users";
   runMigrations();
 });
 
@@ -32,12 +32,7 @@ afterEach(() => {
   delete process.env.DATABASE_PATH;
 });
 
-const PROFILE: GitHubProfile = {
-  id: 12345,
-  login: "octocat",
-  name: "The Octocat",
-  avatar_url: "https://avatars.githubusercontent.com/u/12345?v=4",
-};
+const TEST_HASHED_ID = "a1b2c3d4e5f6a7b8c9";
 
 // ---------------------------------------------------------------------------
 // upsertUser / getUserById
@@ -46,48 +41,38 @@ const PROFILE: GitHubProfile = {
 describe("users", () => {
   describe("upsertUser", () => {
     test("inserts a new user and returns their ID", () => {
-      const userId = upsertUser(PROFILE);
+      const userId = upsertUser(TEST_HASHED_ID);
       expect(userId).toBeTruthy();
       expect(typeof userId).toBe("string");
 
       const user = getUserById(userId);
       expect(user).not.toBeNull();
-      expect(user!.githubId).toBe(12345);
-      expect(user!.name).toBe("The Octocat");
-      expect(user!.githubUser).toBe("octocat");
-      expect(user!.avatarUrl).toBe(PROFILE.avatar_url);
+      expect(user!.hashedId).toBe(TEST_HASHED_ID);
+      expect(user!.createdAt).toBeTruthy();
+      expect(user!.updatedAt).toBeTruthy();
     });
 
-    test("uses login as name when name is null", () => {
-      const profile: GitHubProfile = { ...PROFILE, name: null };
-      const userId = upsertUser(profile);
-      const user = getUserById(userId);
-      expect(user!.name).toBe("octocat");
-    });
-
-    test("returns same ID on second upsert with same githubId", () => {
-      const id1 = upsertUser(PROFILE);
-      const id2 = upsertUser(PROFILE);
+    test("returns same ID on second upsert with same hashedId", () => {
+      const id1 = upsertUser(TEST_HASHED_ID);
+      const id2 = upsertUser(TEST_HASHED_ID);
       expect(id1).toBe(id2);
     });
 
-    test("updates profile fields on re-login", () => {
-      const id = upsertUser(PROFILE);
+    test("updates updatedAt on re-login", () => {
+      const id = upsertUser(TEST_HASHED_ID);
+      const user1 = getUserById(id);
 
-      const updatedProfile: GitHubProfile = {
-        ...PROFILE,
-        name: "New Name",
-        login: "newlogin",
-        avatar_url: "https://new-avatar.com/pic.png",
-      };
+      // Small delay to ensure different timestamp
+      const earlier = user1!.updatedAt;
 
-      const id2 = upsertUser(updatedProfile);
+      // Force a slightly different timestamp
+      const id2 = upsertUser(TEST_HASHED_ID);
       expect(id2).toBe(id);
 
-      const user = getUserById(id);
-      expect(user!.name).toBe("New Name");
-      expect(user!.githubUser).toBe("newlogin");
-      expect(user!.avatarUrl).toBe("https://new-avatar.com/pic.png");
+      const user2 = getUserById(id);
+      expect(user2!.hashedId).toBe(TEST_HASHED_ID);
+      // updatedAt should be >= earlier (might be same ms)
+      expect(user2!.updatedAt >= earlier).toBe(true);
     });
   });
 
@@ -97,7 +82,7 @@ describe("users", () => {
     });
 
     test("returns user for valid ID", () => {
-      const id = upsertUser(PROFILE);
+      const id = upsertUser(TEST_HASHED_ID);
       const user = getUserById(id);
       expect(user).not.toBeNull();
       expect(user!.id).toBe(id);
@@ -109,32 +94,32 @@ describe("users", () => {
   // ---------------------------------------------------------------------------
 
   describe("ban management", () => {
-    test("isGithubIdBanned returns false for non-banned ID", () => {
-      expect(isGithubIdBanned(99999)).toBe(false);
+    test("isHashedIdBanned returns false for non-banned ID", () => {
+      expect(isHashedIdBanned("000000000000000000")).toBe(false);
     });
 
-    test("banGithubId bans a GitHub ID", () => {
-      banGithubId(12345);
-      expect(isGithubIdBanned(12345)).toBe(true);
+    test("banHashedId bans a hashed ID", () => {
+      banHashedId(TEST_HASHED_ID);
+      expect(isHashedIdBanned(TEST_HASHED_ID)).toBe(true);
     });
 
-    test("banGithubId is a no-op if already banned", () => {
-      banGithubId(12345);
-      banGithubId(12345); // should not throw
-      expect(isGithubIdBanned(12345)).toBe(true);
+    test("banHashedId is a no-op if already banned", () => {
+      banHashedId(TEST_HASHED_ID);
+      banHashedId(TEST_HASHED_ID); // should not throw
+      expect(isHashedIdBanned(TEST_HASHED_ID)).toBe(true);
     });
 
-    test("unbanGithubId removes the ban", () => {
-      banGithubId(12345);
-      expect(isGithubIdBanned(12345)).toBe(true);
+    test("unbanHashedId removes the ban", () => {
+      banHashedId(TEST_HASHED_ID);
+      expect(isHashedIdBanned(TEST_HASHED_ID)).toBe(true);
 
-      unbanGithubId(12345);
-      expect(isGithubIdBanned(12345)).toBe(false);
+      unbanHashedId(TEST_HASHED_ID);
+      expect(isHashedIdBanned(TEST_HASHED_ID)).toBe(false);
     });
 
-    test("unbanGithubId is a no-op if not banned", () => {
-      unbanGithubId(99999); // should not throw
-      expect(isGithubIdBanned(99999)).toBe(false);
+    test("unbanHashedId is a no-op if not banned", () => {
+      unbanHashedId("000000000000000000"); // should not throw
+      expect(isHashedIdBanned("000000000000000000")).toBe(false);
     });
   });
 
@@ -144,7 +129,7 @@ describe("users", () => {
 
   describe("hardDeleteUser", () => {
     test("deletes a user and returns true", () => {
-      const id = upsertUser(PROFILE);
+      const id = upsertUser(TEST_HASHED_ID);
       expect(hardDeleteUser(id)).toBe(true);
       expect(getUserById(id)).toBeNull();
     });
@@ -155,7 +140,7 @@ describe("users", () => {
 
     test("cascades to answers", () => {
       const { getDb } = require("../index");
-      const userId = upsertUser(PROFILE);
+      const userId = upsertUser(TEST_HASHED_ID);
 
       // Create a poll and cast a vote
       const pollId = createPoll(
@@ -198,13 +183,11 @@ describe("users", () => {
       expect(exportUserData("nonexistent")).toBeNull();
     });
 
-    test("exports user profile data", () => {
-      const id = upsertUser(PROFILE);
+    test("exports user data with hashedId", () => {
+      const id = upsertUser(TEST_HASHED_ID);
       const data = exportUserData(id);
       expect(data).not.toBeNull();
-      expect(data!.user.githubUser).toBe("octocat");
-      expect(data!.user.name).toBe("The Octocat");
-      expect(data!.user.avatarUrl).toBe(PROFILE.avatar_url);
+      expect(data!.user.hashedId).toBe(TEST_HASHED_ID);
       expect(data!.user.createdAt).toBeTruthy();
       expect(data!.exportedAt).toBeTruthy();
       expect(data!.votes).toEqual([]);
@@ -212,7 +195,7 @@ describe("users", () => {
 
     test("exports user votes", () => {
       const { getDb } = require("../index");
-      const userId = upsertUser(PROFILE);
+      const userId = upsertUser(TEST_HASHED_ID);
 
       const pollId = createPoll(
         { title: "Export Poll", body: "", dueDate: null, status: "active" },

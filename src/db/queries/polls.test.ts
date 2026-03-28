@@ -12,6 +12,7 @@ beforeEach(() => {
   rmSync(TEST_DIR, { recursive: true, force: true });
   mkdirSync(TEST_DIR, { recursive: true });
   process.env.DATABASE_PATH = TEST_DB_PATH;
+  process.env.HASH_PEPPER = "test-pepper-for-polls";
 
   // Run real migrations to set up schema
   runMigrations();
@@ -153,11 +154,12 @@ function insertVote(pollId: string, questionId: string): void {
   const db = new Database(TEST_DB_PATH);
   const now = new Date().toISOString();
   const userId = crypto.randomUUID();
+  const hashedId = crypto.randomUUID().replace(/-/g, "").slice(0, 18);
   // Create a minimal user for the FK
   db.run(
-    `INSERT OR IGNORE INTO users (id, githubId, name, githubUser, avatarUrl, createdAt, updatedAt)
-     VALUES (?, ?, 'Test', 'test', 'http://x', ?, ?)`,
-    [userId, Math.floor(Math.random() * 1_000_000), now, now]
+    `INSERT OR IGNORE INTO users (id, hashedId, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?)`,
+    [userId, hashedId, now, now]
   );
   db.run(
     `INSERT INTO answers (id, userId, pollId, questionId, createdAt, updatedAt)
