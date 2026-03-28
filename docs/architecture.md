@@ -26,7 +26,7 @@ Bun provides:
 |-------------|---------|------|
 | `/` | Home page — all active polls grouped in a list | None |
 | `/poll/:id` | Individual poll page — results, voters, timeline | None (view) / GitHub OAuth (vote) |
-| `/privacy` | Privacy policy page — GDPR transparency | None |
+| `/privacy` | Privacy notice — what data we store and your rights | None |
 | `/account` | Account management — data export and deletion | GitHub OAuth (logged in) |
 | `/account/export` | Download personal data as JSON | GitHub OAuth (logged in) |
 | `/account/delete` | Permanently delete account (POST) | GitHub OAuth (logged in) |
@@ -204,7 +204,7 @@ src/
     queries/            # Query functions grouped by model
   views/                # HTML template functions
     layout.ts           # Shared HTML shell (head, nav, footer)
-    privacy.ts          # Privacy policy page
+    privacy.ts          # Privacy notice page
     account.ts          # Account management page (data export, deletion)
     pages/              # Individual page templates
   public/               # Static assets served directly
