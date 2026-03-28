@@ -55,6 +55,6 @@
 
 ## 9. Testing and Verification
 
-- [ ] 9.1 Run full test suite (`bun test`) and fix any failures from type/schema changes
-- [ ] 9.2 Verify migration works on a database with existing users and bans
-- [ ] 9.3 Verify login flow end-to-end — new user creation stores only hash, returning user updates only `updatedAt`
+- [x] 9.1 Run full test suite (`bun test`) and fix any failures from type/schema changes
+- [x] 9.2 Verify migration works on a database with existing users and bans
+- [x] 9.3 Verify login flow end-to-end — new user creation stores only hash, returning user updates only `updatedAt`

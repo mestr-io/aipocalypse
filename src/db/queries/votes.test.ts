@@ -17,15 +17,11 @@ beforeEach(() => {
   rmSync(TEST_DIR, { recursive: true, force: true });
   mkdirSync(TEST_DIR, { recursive: true });
   process.env.DATABASE_PATH = TEST_DB_PATH;
+  process.env.HASH_PEPPER = "test-pepper-for-votes";
   runMigrations();
 
   // Seed a user
-  userId = upsertUser({
-    id: 111,
-    login: "testuser",
-    name: "Test User",
-    avatar_url: "https://example.com/avatar.png",
-  });
+  userId = upsertUser("aabbcc112233445566");
 
   // Seed a poll with 2 questions
   pollId = createPoll(
@@ -73,12 +69,7 @@ describe("votes", () => {
     });
 
     test("different users can vote on same poll", () => {
-      const userId2 = upsertUser({
-        id: 222,
-        login: "testuser2",
-        name: "Test User 2",
-        avatar_url: "https://example.com/avatar2.png",
-      });
+      const userId2 = upsertUser("ddeeff667788990011");
 
       castVote(userId, pollId, questionIds[0]!);
       castVote(userId2, pollId, questionIds[1]!);
