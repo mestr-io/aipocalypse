@@ -1,4 +1,5 @@
 import type { User } from "../db/queries/users";
+import { renderIdentity } from "./identity";
 
 export interface LayoutOptions {
   title?: string;
@@ -16,7 +17,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   const pageTitle = title === "AIPocalypse" ? title : `${title} — AIPocalypse`;
 
   const authSection = user
-    ? `<span class="user-info"><img src="${escapeHtml(user.avatarUrl)}" alt="" class="user-avatar"> <span class="dimmed">${escapeHtml(user.name)}</span></span> <span class="nav-sep">|</span> <a href="/account">Account</a> <span class="nav-sep">|</span> <a href="/auth/logout">Logout</a>`
+    ? `${renderIdentity(user.hashedId)} <span class="nav-sep">|</span> <a href="/auth/logout">Logout</a>`
     : `<a href="/auth/login">Sign in with GitHub</a> <span class="dimmed login-notice">(<a href="/privacy">we store minimal data</a>)</span>`;
 
   return `<!DOCTYPE html>

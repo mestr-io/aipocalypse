@@ -32,9 +32,9 @@
 
 ## 5. Three-Color Identity View Helper
 
-- [ ] 5.1 Create view helper function (in `src/views/layout.ts` or new `src/views/identity.ts`) that takes an 18-char hash and returns HTML with three colored text segments + three colored square glyphs
-- [ ] 5.2 Each 6-char segment rendered as `<span style="color:#XXXXXX">XXXXXX</span>`, separated by hyphens, followed by `<span style="color:#XXXXXX">■</span>` for each segment
-- [ ] 5.3 Entire hash text wrapped in `<a href="/account">` link
+- [x] 5.1 Create view helper function (in `src/views/layout.ts` or new `src/views/identity.ts`) that takes an 18-char hash and returns HTML with three colored text segments + three colored square glyphs
+- [x] 5.2 Each 6-char segment rendered as `<span style="color:#XXXXXX">XXXXXX</span>`, separated by hyphens, followed by `<span style="color:#XXXXXX">■</span>` for each segment
+- [x] 5.3 Entire hash text wrapped in `<a href="/account">` link
 
 ## 6. Header and Account Page Updates
 
