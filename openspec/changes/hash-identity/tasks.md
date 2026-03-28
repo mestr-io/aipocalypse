@@ -17,12 +17,12 @@
 
 ## 3. User Queries Rewrite
 
-- [ ] 3.1 Update `User` type in `src/db/queries/users.ts` — replace `githubId`, `name`, `githubUser`, `avatarUrl` with `hashedId: string`
-- [ ] 3.2 Remove `GitHubProfile` type usage from upsert — rewrite `upsertUser` to accept `hashedId: string` instead of `GitHubProfile`, only insert/update `hashedId` and `updatedAt`
-- [ ] 3.3 Rewrite ban functions to use `hashedId` — `isHashedIdBanned(hashedId: string)`, `banHashedId(hashedId: string)`, `unbanHashedId(hashedId: string)`
-- [ ] 3.4 Update `exportUserData` — return `hashedId` and `createdAt` instead of GitHub profile fields
-- [ ] 3.5 Update `UserExport` type to match new export shape
-- [ ] 3.6 Update all user query tests for new types and behavior
+- [x] 3.1 Update `User` type in `src/db/queries/users.ts` — replace `githubId`, `name`, `githubUser`, `avatarUrl` with `hashedId: string`
+- [x] 3.2 Remove `GitHubProfile` type usage from upsert — rewrite `upsertUser` to accept `hashedId: string` instead of `GitHubProfile`, only insert/update `hashedId` and `updatedAt`
+- [x] 3.3 Rewrite ban functions to use `hashedId` — `isHashedIdBanned(hashedId: string)`, `banHashedId(hashedId: string)`, `unbanHashedId(hashedId: string)`
+- [x] 3.4 Update `exportUserData` — return `hashedId` and `createdAt` instead of GitHub profile fields
+- [x] 3.5 Update `UserExport` type to match new export shape
+- [x] 3.6 Update all user query tests for new types and behavior
 
 ## 4. Auth Flow Update
 
