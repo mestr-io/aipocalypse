@@ -26,9 +26,9 @@
 
 ## 4. Auth Flow Update
 
-- [ ] 4.1 Update OAuth callback in `src/auth/routes.ts` — after fetching GitHub profile, compute `hashedId` from `profile.id`, pass `hashedId` to `upsertUser` instead of full profile
-- [ ] 4.2 Update ban check — compute hash first, then call `isHashedIdBanned(hashedId)` before upsert
-- [ ] 4.3 Keep `GitHubProfile` type for OAuth response parsing but only use `profile.id` field after hash computation
+- [x] 4.1 Update OAuth callback in `src/auth/routes.ts` — after fetching GitHub profile, compute `hashedId` from `profile.id`, pass `hashedId` to `upsertUser` instead of full profile
+- [x] 4.2 Update ban check — compute hash first, then call `isHashedIdBanned(hashedId)` before upsert
+- [x] 4.3 Keep `GitHubProfile` type for OAuth response parsing but only use `profile.id` field after hash computation
 
 ## 5. Three-Color Identity View Helper
 

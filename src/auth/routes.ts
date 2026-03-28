@@ -1,7 +1,19 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { signSession, SESSION_COOKIE, STATE_COOKIE } from "./session";
-import { upsertUser, isGithubIdBanned, type GitHubProfile } from "../db/queries/users";
+import { upsertUser, isHashedIdBanned } from "../db/queries/users";
+import { computeHashedId } from "../db/hash";
+
+/**
+ * GitHub user profile from the API response.
+ * Only `id` is used — all other fields are discarded after hash computation.
+ */
+interface GitHubProfile {
+  id: number;
+  login: string;
+  name: string | null;
+  avatar_url: string;
+}
 
 // ---------------------------------------------------------------------------
 // Config
@@ -126,13 +138,16 @@ auth.get("/callback", async (c) => {
 
   const profile = (await userRes.json()) as GitHubProfile;
 
+  // Compute hash identity — profile data is discarded after this
+  const hashedId = computeHashedId(profile.id);
+
   // Reject banned users before upserting
-  if (isGithubIdBanned(profile.id)) {
+  if (isHashedIdBanned(hashedId)) {
     return c.text("Your account has been banned.", 403);
   }
 
-  // Upsert user in DB — token is discarded after this
-  const userId = upsertUser(profile);
+  // Upsert user in DB — only hashedId is stored, token is discarded
+  const userId = upsertUser(hashedId);
 
   // Set session cookie
   const sessionToken = await signSession(userId);
