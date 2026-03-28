@@ -38,9 +38,9 @@
 
 ## 6. Header and Account Page Updates
 
-- [ ] 6.1 Update `src/views/layout.ts` — replace `avatar + name + Account + Logout` with the three-color identity helper output for logged-in users
-- [ ] 6.2 Update `src/views/account.ts` — show hash identity instead of GitHub profile info, keep export/delete, add logout link
-- [ ] 6.3 Update data export route in `src/index.ts` — change download filename from `aipocalypse-data-${user.githubUser}.json` to `aipocalypse-data-${user.hashedId}.json`
+- [x] 6.1 Update `src/views/layout.ts` — replace `avatar + name + Account + Logout` with the three-color identity helper output for logged-in users
+- [x] 6.2 Update `src/views/account.ts` — show hash identity instead of GitHub profile info, keep export/delete, add logout link
+- [x] 6.3 Update data export route in `src/index.ts` — change download filename from `aipocalypse-data-${user.githubUser}.json` to `aipocalypse-data-${user.hashedId}.json`
 
 ## 7. Privacy Page and Admin Updates
 

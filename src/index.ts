@@ -95,7 +95,7 @@ app.get("/account/export", (c) => {
   const data = exportUserData(user.id);
   if (!data) return c.text("User not found.", 404);
 
-  c.header("Content-Disposition", `attachment; filename="aipocalypse-data-${user.githubUser}.json"`);
+  c.header("Content-Disposition", `attachment; filename="aipocalypse-data-${user.hashedId}.json"`);
   return c.json(data);
 });
 

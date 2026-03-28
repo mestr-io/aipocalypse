@@ -1,4 +1,5 @@
-import { layout, escapeHtml } from "./layout";
+import { layout } from "./layout";
+import { renderIdentity } from "./identity";
 import type { User } from "../db/queries/users";
 
 /**
@@ -8,8 +9,7 @@ export function accountPage(user: User): string {
   const content = `
     <h1>Account</h1>
 
-    <p>Signed in as <strong>${escapeHtml(user.name)}</strong>
-    (<span class="dimmed">${escapeHtml(user.githubUser)}</span>)</p>
+    <p>Your identity: ${renderIdentity(user.hashedId)}</p>
 
     <h2>Export your data</h2>
 
@@ -24,6 +24,8 @@ export function accountPage(user: User): string {
     <form method="POST" action="/account/delete" onsubmit="return confirm('Are you sure? This will permanently delete your account and all your votes.');">
       <button type="submit" class="btn btn-danger">Delete my account</button>
     </form>
+
+    <p><a href="/auth/logout">Logout</a></p>
   `;
 
   return layout(content, { title: "Account", user });
