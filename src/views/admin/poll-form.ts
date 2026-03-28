@@ -11,6 +11,7 @@ export interface PollFormValues {
   body: string;
   dueDate: string;
   status: string;
+  links: string;
   answers: AnswerValue[];
 }
 
@@ -25,6 +26,7 @@ const DEFAULT_VALUES: PollFormValues = {
   body: "",
   dueDate: "",
   status: "hidden",
+  links: "",
   answers: [{ text: "" }, { text: "" }],
 };
 
@@ -81,6 +83,10 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
       <div class="form-group">
         <label for="status">Status</label>
         <select id="status" name="status">${statusOptions}</select>
+      </div>
+      <div class="form-group">
+        <label for="links">Context Links <span class="admin-dimmed">(one per line)</span></label>
+        <textarea id="links" name="links" rows="4" placeholder="[Article title](https://example.com/article)&#10;[Report name](https://example.com/report)">${escapeHtml(values.links)}</textarea>
       </div>
       <div class="form-group">
         <label>Answer Options <span class="admin-dimmed">(min 2)</span></label>

@@ -3,6 +3,28 @@ import type { PollDetail } from "../db/queries/polls";
 import type { User } from "../db/queries/users";
 
 /**
+ * Parse markdown-style links and render as an HTML list.
+ * Each line matching [Label](url) becomes an <a> element.
+ * Non-matching lines are silently ignored.
+ */
+export function renderLinks(links: string): string {
+  if (!links || !links.trim()) return "";
+
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  const matches = [...links.matchAll(linkPattern)];
+
+  if (matches.length === 0) return "";
+
+  const items = matches.map((match) => {
+    const label = escapeHtml(match[1]!);
+    const url = escapeHtml(match[2]!);
+    return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a></li>`;
+  });
+
+  return `<ul class="poll-links">${items.join("")}</ul>`;
+}
+
+/**
  * Public poll detail page with AoC-style progress bars and voting form.
  */
 export function pollDetailPage(
@@ -123,6 +145,7 @@ export function pollDetailPage(
     ${statusLabel}
     ${dueLabel}
     <div class="poll-body">${escapeHtml(poll.body)}</div>
+    ${renderLinks(poll.links)}
     ${authPrompt}
     ${formOpen}
     <div class="poll-options">
