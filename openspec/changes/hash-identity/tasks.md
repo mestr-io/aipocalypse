@@ -44,8 +44,8 @@
 
 ## 7. Privacy Page and Admin Updates
 
-- [ ] 7.1 Update `src/views/privacy.ts` — update schema display to show new minimal `users` table (no PII columns)
-- [ ] 7.2 Update admin ban/unban routes and views to operate on `hashedId` instead of `githubId`
+- [x] 7.1 Update `src/views/privacy.ts` — update schema display to show new minimal `users` table (no PII columns)
+- [x] 7.2 Update admin ban/unban routes and views to operate on `hashedId` instead of `githubId`
 
 ## 8. Documentation
 
