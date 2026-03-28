@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { createPoll, listPolls, listActivePolls, getPollWithQuestions, getPollForEdit, updatePoll } from "./polls";
+import { createPoll, listPolls, listActivePolls, listPublicPolls, getPollWithQuestions, getPollForEdit, updatePoll } from "./polls";
 import { runMigrations } from "../migrate";
 
 const TEST_DIR = join(import.meta.dirname!, "../../../.test-tmp");
@@ -602,5 +602,42 @@ describe("poll links field", () => {
 
     const result = getPollForEdit(pollId);
     expect(result!.links).toBe("");
+  });
+});
+
+describe("listPublicPolls links field", () => {
+  test("returns links field for polls with links", () => {
+    const links = "[Docs](https://docs.example.com)\n[Blog](https://blog.example.com)";
+    createPoll(
+      { title: "Poll With Links", body: "body", dueDate: "2026-12-31", status: "active", links },
+      ["A", "B"]
+    );
+
+    const polls = listPublicPolls();
+    expect(polls.length).toBe(1);
+    expect(polls[0]!.links).toBe(links);
+  });
+
+  test("returns empty string for polls without links", () => {
+    createPoll(
+      { title: "Poll No Links", body: "body", dueDate: "2026-12-31", status: "active" },
+      ["A", "B"]
+    );
+
+    const polls = listPublicPolls();
+    expect(polls.length).toBe(1);
+    expect(polls[0]!.links).toBe("");
+  });
+
+  test("listActivePolls also returns links field", () => {
+    const links = "[Reference](https://example.com)";
+    createPoll(
+      { title: "Active Poll", body: "body", dueDate: "", status: "active", links },
+      ["A", "B"]
+    );
+
+    const polls = listActivePolls();
+    expect(polls.length).toBe(1);
+    expect(polls[0]!.links).toBe(links);
   });
 });

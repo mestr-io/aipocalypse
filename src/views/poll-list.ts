@@ -1,4 +1,5 @@
 import { layout, escapeHtml } from "./layout";
+import { renderLinks } from "./poll-detail";
 import type { ActivePollRow } from "../db/queries/polls";
 import type { User } from "../db/queries/users";
 
@@ -31,6 +32,7 @@ export function pollListPage(
       <div class="poll-card">
         <h2><a href="/poll/${escapeHtml(p.id)}">${escapeHtml(p.name)}</a> ${statusBadge}</h2>
         <p class="poll-preview">${preview}</p>
+        ${renderLinks(p.links)}
         <div class="poll-meta">
           ${dueLabel}
           <span class="dimmed">${p.voteCount} vote${p.voteCount !== 1 ? "s" : ""}</span>

@@ -32,6 +32,7 @@ export interface ActivePollRow {
   body: string;
   dueDate: string;
   status: string;
+  links: string;
   createdAt: string;
   voteCount: number;
 }
@@ -147,7 +148,7 @@ export function listActivePolls(): ActivePollRow[] {
   return db
     .query<ActivePollRow, []>(
       `SELECT
-         p.id, p.name, p.body, p.dueDate, p.status, p.createdAt,
+         p.id, p.name, p.body, p.dueDate, p.status, p.links, p.createdAt,
          COUNT(a.id) AS voteCount
        FROM polls p
        LEFT JOIN answers a ON a.pollId = p.id
@@ -167,7 +168,7 @@ export function listPublicPolls(): ActivePollRow[] {
   return db
     .query<ActivePollRow, []>(
       `SELECT
-         p.id, p.name, p.body, p.dueDate, p.status, p.createdAt,
+         p.id, p.name, p.body, p.dueDate, p.status, p.links, p.createdAt,
          COUNT(a.id) AS voteCount
        FROM polls p
        LEFT JOIN answers a ON a.pollId = p.id
