@@ -1,19 +1,19 @@
 /**
- * Three-color identity rendering.
+ * Identity rendering with green text and colored glyphs.
  *
- * Takes an 18-char hex hash and renders it as three colored segments
- * separated by hyphens, followed by three colored square glyphs.
- * Each 6-char segment is used as both the text content and its CSS color.
+ * Takes an 18-char hex hash and renders it as three segments in the
+ * standard green link color, separated by hyphens, followed by three
+ * colored square glyphs where each glyph uses the segment's hex value.
  */
 
 /**
- * Render a three-color identity badge from an 18-char hex hash.
+ * Render an identity badge from an 18-char hex hash.
  *
  * Output format:
- *   <a href="/account">
- *     <span style="color:#seg1">seg1</span>-
- *     <span style="color:#seg2">seg2</span>-
- *     <span style="color:#seg3">seg3</span>
+ *   <a href="/account" class="identity">
+ *     <span style="color:#009900">seg1</span>-
+ *     <span style="color:#009900">seg2</span>-
+ *     <span style="color:#009900">seg3</span>
  *     <span style="color:#seg1">■</span>
  *     <span style="color:#seg2">■</span>
  *     <span style="color:#seg3">■</span>
@@ -27,7 +27,7 @@ export function renderIdentity(hashedId: string): string {
   const segments = [seg1, seg2, seg3];
 
   const hashText = segments
-    .map((s) => `<span style="color:#${s}">${s}</span>`)
+    .map((s) => `<span style="color:#009900">${s}</span>`)
     .join("-");
 
   const glyphs = segments

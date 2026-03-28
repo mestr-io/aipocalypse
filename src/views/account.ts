@@ -25,7 +25,7 @@ export function accountPage(user: User): string {
       <button type="submit" class="btn btn-danger">Delete my account</button>
     </form>
 
-    <p><a href="/auth/logout">Logout</a></p>
+    <p class="section-heading"><a href="/auth/logout">Logout</a></p>
   `;
 
   return layout(content, { title: "Account", user });

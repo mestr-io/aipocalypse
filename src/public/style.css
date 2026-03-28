@@ -488,6 +488,17 @@ label {
   border-radius: 2px;
 }
 
+/* === Identity Badge === */
+
+.identity {
+  text-decoration: none;
+}
+
+.identity:hover span[style="color:#009900"],
+.identity:focus span[style="color:#009900"] {
+  color: #00cc00 !important;
+}
+
 /* === Section Headings === */
 
 .section-heading {
