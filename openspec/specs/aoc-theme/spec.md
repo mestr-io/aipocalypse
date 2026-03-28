@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## Requirements
 
 ### Requirement: Advent of Code visual theme
 The CSS SHALL implement a visual style inspired by Advent of Code with the following properties:
@@ -11,6 +11,8 @@ The CSS SHALL implement a visual style inspired by Advent of Code with the follo
 - Structural dimmed color: `#333340` (dark grey) — used for borders, separators, and non-text decorative elements only
 - Link color: `#009900` (dark green), with `#00cc00` on hover
 - Font: `"Source Code Pro", monospace`
+
+The header for logged-in users SHALL display the user's three-color hash identity (colored text segments with colored square glyphs) linking to `/account`, replacing the previous avatar + username + Account + Logout links. The header for logged-out users SHALL continue to display the login link.
 
 #### Scenario: Dark background renders
 - **WHEN** any page loads in a browser
@@ -28,7 +30,14 @@ The CSS SHALL implement a visual style inspired by Advent of Code with the follo
 - **WHEN** secondary text is rendered on an admin page using the `.admin-dimmed` class
 - **THEN** the text color is `#c8b87a`
 
-## ADDED Requirements
+#### Scenario: Logged-in header shows hash identity
+- **WHEN** a logged-in user views any page
+- **THEN** the header displays their 18-char hash as three colored 6-char segments separated by hyphens, followed by three colored square glyphs, linking to `/account`
+- **AND** no avatar image, GitHub username, or separate Account/Logout links are shown in the header
+
+#### Scenario: Logged-out header unchanged
+- **WHEN** a logged-out user views any page
+- **THEN** the header displays the login link as before
 
 ### Requirement: Deleted poll row styling
 The CSS SHALL provide styling for soft-deleted poll rows in the admin dashboard. Deleted rows SHALL have strikethrough text on the title and a muted visual treatment to distinguish them from active polls.
