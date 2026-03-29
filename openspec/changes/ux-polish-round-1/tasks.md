@@ -40,4 +40,4 @@
 
 ## 7. Full test suite
 
-- [ ] 7.1 Run `bun test` and verify all tests pass
+- [x] 7.1 Run `bun test` and verify all tests pass
