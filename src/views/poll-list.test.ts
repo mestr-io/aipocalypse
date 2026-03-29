@@ -23,4 +23,38 @@ describe("pollListPage", () => {
     expect(html).not.toContain("poll-links");
     expect(html).not.toContain("Related info:");
   });
+
+  test("renders voted badge when poll is in votedPollIds", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-1"]));
+    expect(html).toContain('<span class="voted-badge">[voted]</span>');
+  });
+
+  test("does not render voted badge when poll is not in votedPollIds", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-other"]));
+    expect(html).not.toContain("voted-badge");
+  });
+
+  test("does not render voted badge when no votedPollIds passed", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll]);
+    expect(html).not.toContain("voted-badge");
+  });
+
+  test("voted badge appears in poll-meta row", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-1"]));
+    const metaIndex = html.indexOf("poll-meta");
+    const badgeIndex = html.indexOf("voted-badge");
+    expect(metaIndex).toBeGreaterThan(-1);
+    expect(badgeIndex).toBeGreaterThan(-1);
+    expect(badgeIndex).toBeGreaterThan(metaIndex);
+  });
+
+  test("voted badge shown on done polls too", () => {
+    const poll = makePoll({ id: "poll-done", status: "done" });
+    const html = pollListPage([poll], null, new Set(["poll-done"]));
+    expect(html).toContain("voted-badge");
+  });
 });

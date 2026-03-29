@@ -529,3 +529,10 @@ label {
 .poll-links a:hover {
   color: #00cc00;
 }
+
+/* === Voted Badge === */
+
+.voted-badge {
+  color: #5e8c61;
+  font-size: 0.9em;
+}

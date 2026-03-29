@@ -19,12 +19,12 @@
 
 ## 4. Voted badge on poll list cards
 
-- [ ] 4.1 Update `pollListPage()` signature in `src/views/poll-list.ts` to accept optional `votedPollIds: Set<number>`
-- [ ] 4.2 Update `renderCard()` to accept optional `voted?: boolean` parameter and render `<span class="voted-badge">[voted]</span>` on the meta row when true
-- [ ] 4.3 Update `GET /` route in `src/index.ts` — call `getUserVotedPollIds` for authenticated users, pass resulting `Set<number>` to `pollListPage()`
-- [ ] 4.4 Add `.voted-badge` CSS rule to `src/public/style.css` — color `#5e8c61`, font-size `0.9em`
-- [ ] 4.5 Write tests for voted badge rendering in `src/views/poll-list.test.ts` — badge shown when voted, no badge when not voted, no badge when no votedPollIds passed
-- [ ] 4.6 Verify poll-list tests pass with `bun test src/views/poll-list.test.ts`
+- [x] 4.1 Update `pollListPage()` signature in `src/views/poll-list.ts` to accept optional `votedPollIds: Set<number>`
+- [x] 4.2 Update `renderCard()` to accept optional `voted?: boolean` parameter and render `<span class="voted-badge">[voted]</span>` on the meta row when true
+- [x] 4.3 Update `GET /` route in `src/index.ts` — call `getUserVotedPollIds` for authenticated users, pass resulting `Set<number>` to `pollListPage()`
+- [x] 4.4 Add `.voted-badge` CSS rule to `src/public/style.css` — color `#5e8c61`, font-size `0.9em`
+- [x] 4.5 Write tests for voted badge rendering in `src/views/poll-list.test.ts` — badge shown when voted, no badge when not voted, no badge when no votedPollIds passed
+- [x] 4.6 Verify poll-list tests pass with `bun test src/views/poll-list.test.ts`
 
 ## 5. Account page section spacing
 

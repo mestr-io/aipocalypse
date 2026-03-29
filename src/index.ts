@@ -10,7 +10,7 @@ import { auth } from "./auth/routes";
 import { verifySession, SESSION_COOKIE } from "./auth/session";
 import { getUserById, exportUserData, hardDeleteUser, type User } from "./db/queries/users";
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
-import { castVote, getUserVote, isValidQuestion } from "./db/queries/votes";
+import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./db/queries/votes";
 
 // ---------------------------------------------------------------------------
 // App
@@ -51,7 +51,10 @@ app.use("*", async (c, next) => {
 app.get("/", (c) => {
   const user = c.get("user" as never) as User | null;
   const polls = listPublicPolls();
-  return c.html(pollListPage(polls, user));
+  const votedPollIds = user
+    ? new Set(getUserVotedPollIds(user.id))
+    : new Set<string>();
+  return c.html(pollListPage(polls, user, votedPollIds));
 });
 
 // Poll detail
