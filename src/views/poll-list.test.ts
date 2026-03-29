@@ -16,42 +16,45 @@ function makePoll(overrides: Partial<ActivePollRow> = {}): ActivePollRow {
   };
 }
 
-describe("pollListPage poll card links", () => {
-  test("renders links on poll card when links field has valid links", () => {
+describe("pollListPage", () => {
+  test("poll card does not render context links", () => {
     const links = "[Docs](https://docs.example.com)\n[Blog](https://blog.example.com)";
     const html = pollListPage([makePoll({ links })]);
-    expect(html).toContain('<ul class="poll-links">');
-    expect(html).toContain(">Docs</a>");
-    expect(html).toContain(">Blog</a>");
-  });
-
-  test("does not render links section when links field is empty", () => {
-    const html = pollListPage([makePoll({ links: "" })]);
     expect(html).not.toContain("poll-links");
+    expect(html).not.toContain("Related info:");
   });
 
-  test("links appear between poll-preview and poll-meta", () => {
-    const links = "[Reference](https://example.com)";
-    const html = pollListPage([makePoll({ links })]);
-    const previewIndex = html.indexOf("poll-preview");
-    const linksIndex = html.indexOf("poll-links");
+  test("renders voted badge when poll is in votedPollIds", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-1"]));
+    expect(html).toContain('<span class="voted-badge">[voted]</span>');
+  });
+
+  test("does not render voted badge when poll is not in votedPollIds", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-other"]));
+    expect(html).not.toContain("voted-badge");
+  });
+
+  test("does not render voted badge when no votedPollIds passed", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll]);
+    expect(html).not.toContain("voted-badge");
+  });
+
+  test("voted badge appears in poll-meta row", () => {
+    const poll = makePoll({ id: "poll-1" });
+    const html = pollListPage([poll], null, new Set(["poll-1"]));
     const metaIndex = html.indexOf("poll-meta");
-    expect(previewIndex).toBeGreaterThan(-1);
-    expect(linksIndex).toBeGreaterThan(-1);
+    const badgeIndex = html.indexOf("voted-badge");
     expect(metaIndex).toBeGreaterThan(-1);
-    expect(linksIndex).toBeGreaterThan(previewIndex);
-    expect(linksIndex).toBeLessThan(metaIndex);
+    expect(badgeIndex).toBeGreaterThan(-1);
+    expect(badgeIndex).toBeGreaterThan(metaIndex);
   });
 
-  test("does not render links section for malformed links", () => {
-    const html = pollListPage([makePoll({ links: "just text\nno links" })]);
-    expect(html).not.toContain("poll-links");
-  });
-
-  test("links open in new tab with noopener noreferrer", () => {
-    const links = "[Link](https://example.com)";
-    const html = pollListPage([makePoll({ links })]);
-    expect(html).toContain('target="_blank"');
-    expect(html).toContain('rel="noopener noreferrer"');
+  test("voted badge shown on done polls too", () => {
+    const poll = makePoll({ id: "poll-done", status: "done" });
+    const html = pollListPage([poll], null, new Set(["poll-done"]));
+    expect(html).toContain("voted-badge");
   });
 });

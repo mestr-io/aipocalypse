@@ -1,7 +1,7 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { castVote, getUserVote, isValidQuestion } from "./votes";
+import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./votes";
 import { createPoll } from "./polls";
 import { upsertUser } from "./users";
 import { runMigrations } from "../migrate";
@@ -114,6 +114,46 @@ describe("votes", () => {
         questionIds[0]!,
       ]);
       expect(isValidQuestion(questionIds[0]!, pollId)).toBe(false);
+    });
+  });
+
+  describe("getUserVotedPollIds", () => {
+    test("returns empty array when user has not voted", () => {
+      expect(getUserVotedPollIds(userId)).toEqual([]);
+    });
+
+    test("returns poll ID when user has voted on one poll", () => {
+      castVote(userId, pollId, questionIds[0]!);
+      const ids = getUserVotedPollIds(userId);
+      expect(ids).toEqual([pollId]);
+    });
+
+    test("returns multiple poll IDs when user has voted on multiple polls", () => {
+      const pollId2 = createPoll(
+        { title: "Second Poll", body: "Test 2", dueDate: null, status: "active" },
+        ["Yes", "No"]
+      );
+      const { getDb } = require("../index");
+      const q2Rows = getDb()
+        .query("SELECT id FROM questions WHERE pollId = ? AND deletedAt IS NULL ORDER BY position")
+        .all(pollId2) as { id: string }[];
+
+      castVote(userId, pollId, questionIds[0]!);
+      castVote(userId, pollId2, q2Rows[0]!.id);
+
+      const ids = getUserVotedPollIds(userId);
+      expect(ids).toHaveLength(2);
+      expect(ids).toContain(pollId);
+      expect(ids).toContain(pollId2);
+    });
+
+    test("does not include polls voted on by other users", () => {
+      const userId2 = upsertUser("ddeeff667788990011");
+      castVote(userId, pollId, questionIds[0]!);
+      castVote(userId2, pollId, questionIds[1]!);
+
+      const ids = getUserVotedPollIds(userId);
+      expect(ids).toEqual([pollId]);
     });
   });
 });

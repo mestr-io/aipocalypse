@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Advent of Code visual theme
 The CSS SHALL implement a visual style inspired by Advent of Code with the following properties:
@@ -82,14 +82,3 @@ The account page delete section SHALL use an inline CSS-only slide-reveal patter
 #### Scenario: Delete slide graceful degradation
 - **WHEN** CSS fails to load
 - **THEN** both the initial button and the confirmation buttons are visible, and the form still submits correctly via the submit button
-
-### Requirement: Deleted poll row styling
-The CSS SHALL provide styling for soft-deleted poll rows in the admin dashboard. Deleted rows SHALL have strikethrough text on the title and a muted visual treatment to distinguish them from active polls.
-
-#### Scenario: Deleted row renders with strikethrough
-- **WHEN** a poll row has the `.deleted-row` class
-- **THEN** the poll title text has `text-decoration: line-through` and the row has reduced opacity or muted coloring
-
-#### Scenario: Deleted status badge
-- **WHEN** a poll has been soft-deleted
-- **THEN** a `[deleted]` badge is displayed in a muted red color (`#aa4444`)

@@ -94,3 +94,18 @@ export function isValidQuestion(
 
   return !!row;
 }
+
+/**
+ * Get all poll IDs the user has voted on.
+ * Returns an array of poll IDs (strings).
+ */
+export function getUserVotedPollIds(userId: string): string[] {
+  const db = getDb();
+  const rows = db
+    .query<{ pollId: string }, [string]>(
+      "SELECT DISTINCT pollId FROM answers WHERE userId = ?"
+    )
+    .all(userId);
+
+  return rows.map((r) => r.pollId);
+}

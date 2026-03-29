@@ -28,9 +28,32 @@ describe("accountPage", () => {
     expect(html).toContain("Download my data");
   });
 
-  test("contains delete account form", () => {
+  test("contains delete account form with correct action", () => {
     expect(html).toContain('action="/account/delete"');
     expect(html).toContain("Delete my account");
+  });
+
+  test("does not use browser confirm dialog", () => {
+    expect(html).not.toContain("onsubmit");
+    expect(html).not.toContain("confirm(");
+  });
+
+  test("contains slide-reveal elements", () => {
+    expect(html).toContain('class="delete-slide"');
+    expect(html).toContain('id="delete-toggle"');
+    expect(html).toContain('class="delete-slide-track"');
+    expect(html).toContain('class="delete-slide-initial"');
+    expect(html).toContain('class="delete-slide-confirm"');
+  });
+
+  test("slide-reveal has keep and confirm buttons", () => {
+    expect(html).toContain("No... keep my account");
+    expect(html).toContain("Yes, delete my account");
+  });
+
+  test("confirm button is a submit button", () => {
+    expect(html).toContain('type="submit"');
+    expect(html).toContain("Yes, delete my account");
   });
 
   test("contains logout link", () => {
@@ -40,8 +63,11 @@ describe("accountPage", () => {
 
   test("logout link has section-heading separator", () => {
     expect(html).toContain('class="section-heading"');
-    // The section-heading element should contain the logout link
     expect(html).toContain('class="section-heading"><a href="/auth/logout">Logout</a>');
+  });
+
+  test("delete account heading has section-heading for spacing", () => {
+    expect(html).toContain('class="section-heading danger"');
   });
 
   test("renders within layout", () => {

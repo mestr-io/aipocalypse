@@ -101,6 +101,14 @@ describe("renderLinks", () => {
     expect(targetCount).toBe(2);
     expect(relCount).toBe(2);
   });
+
+  test("links are wrapped in poll-links class for dimmed styling", () => {
+    const html = renderLinks("[Link](https://example.com)");
+    expect(html).toContain('<ul class="poll-links">');
+    expect(html).toContain('<div class="poll-links-section">');
+    // Links are <a> inside .poll-links, so .poll-links a CSS rule applies
+    expect(html).toMatch(/<ul class="poll-links">.*<a href=.*<\/a>.*<\/ul>/s);
+  });
 });
 
 // Helper to build a minimal PollDetail fixture

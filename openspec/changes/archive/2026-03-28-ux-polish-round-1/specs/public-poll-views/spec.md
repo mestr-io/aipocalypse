@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Active poll list on home page
 The application SHALL display a list of all active polls on the home page (`GET /`). Each poll entry SHALL show the poll title, a preview of the description, the due date, and the total number of votes cast. For authenticated users, each poll card SHALL also display a `[voted]` badge if the user has previously voted on that poll. Context links SHALL NOT be rendered on poll list cards — they are shown only on the poll detail page.
@@ -94,38 +94,7 @@ The application SHALL render a poll detail page at `GET /poll/:id` showing the p
 - **WHEN** the links field contains lines that do not match the `[Label](url)` format
 - **THEN** those lines are silently ignored and only valid `[Label](url)` entries are rendered
 
-### Requirement: Active polls query function
-The application SHALL provide a `listActivePolls()` function that returns all active polls with their total vote counts and context links.
-
-#### Scenario: List active polls with vote counts
-- **WHEN** `listActivePolls()` is called
-- **THEN** all non-deleted polls with status `active` are returned ordered by creation date descending, each including a `voteCount` field and the poll's `links` field
-
-### Requirement: Poll with questions and votes query function
-The application SHALL provide a `getPollWithQuestions(pollId)` function that returns a single poll with its questions, per-question vote counts, and context links.
-
-#### Scenario: Get poll with vote distribution
-- **WHEN** `getPollWithQuestions(pollId)` is called with a valid poll ID
-- **THEN** the poll record is returned along with all non-deleted questions ordered by `position` ascending, each including a `voteCount` field, and the poll's `links` field
-
-#### Scenario: Poll not found
-- **WHEN** `getPollWithQuestions(pollId)` is called with a non-existent or soft-deleted poll ID
-- **THEN** the function returns `null`
-
-### Requirement: Client-side vote selection interaction
-The poll detail page SHALL include an inline `<script>` block that handles option selection via click events on option divs. The script SHALL manage a hidden `<input name="questionId">` field, toggle CSS classes (`option-selected`) on option divs, and enable/disable the submit button based on whether the selected option differs from the user's current vote. The script SHALL also support keyboard interaction (Enter/Space) on focused option divs via `tabindex="0"`.
-
-#### Scenario: Click on option div updates hidden input
-- **WHEN** user clicks on a `.poll-option` div with `data-question-id` attribute
-- **THEN** the hidden input's value SHALL be set to that option's `data-question-id`
-
-#### Scenario: Keyboard activation of option
-- **WHEN** user focuses a `.poll-option` div and presses Enter or Space
-- **THEN** the option SHALL be selected as if it were clicked
-
-#### Scenario: Only one option selected at a time
-- **WHEN** user clicks on an option
-- **THEN** the `option-selected` class SHALL be removed from all other options and added only to the clicked option
+## ADDED Requirements
 
 ### Requirement: Bulk voted polls query
 The application SHALL provide a `getUserVotedPollIds(userId: number)` function in `src/db/queries/votes.ts` that returns an array of poll IDs the user has voted on.
@@ -141,3 +110,17 @@ The application SHALL provide a `getUserVotedPollIds(userId: number)` function i
 #### Scenario: Only active polls included
 - **WHEN** `getUserVotedPollIds(userId)` is called and the user has voted on a soft-deleted poll
 - **THEN** the deleted poll's ID is still included (votes are preserved; filtering is the view's concern)
+
+## REMOVED Requirements
+
+### Requirement: Poll card renders context links
+**Reason**: Context links on poll list cards create visual clutter. Links are now shown only on the poll detail page.
+**Migration**: Remove `renderLinks()` call from `renderCard()` in `poll-list.ts`. The `renderLinks()` function itself is retained for use on the poll detail page.
+
+### Requirement: Poll card with no links
+**Reason**: No longer applicable since links are not rendered on poll cards.
+**Migration**: None — the scenario is removed along with the parent requirement.
+
+### Requirement: Poll card with malformed links
+**Reason**: No longer applicable since links are not rendered on poll cards.
+**Migration**: None — the scenario is removed along with the parent requirement.
