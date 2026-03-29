@@ -6,10 +6,10 @@
 
 ## 2. Restyle poll detail context links
 
-- [ ] 2.1 Add `.poll-links a` CSS rule to `src/public/style.css` — color `#5e8c61`, hover `#00cc00`
-- [ ] 2.2 Add `.poll-links-section` CSS rule for spacing (margin-top)
-- [ ] 2.3 Update poll-detail link rendering tests to verify dimmed link class is present
-- [ ] 2.4 Verify poll-detail tests pass with `bun test src/views/poll-detail.test.ts`
+- [x] 2.1 Add `.poll-links a` CSS rule to `src/public/style.css` — color `#5e8c61`, hover `#00cc00`
+- [x] 2.2 Add `.poll-links-section` CSS rule for spacing (margin-top)
+- [x] 2.3 Update poll-detail link rendering tests to verify dimmed link class is present
+- [x] 2.4 Verify poll-detail tests pass with `bun test src/views/poll-detail.test.ts`
 
 ## 3. Bulk voted polls query
 

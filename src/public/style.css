@@ -508,3 +508,24 @@ label {
   padding-top: 1rem;
   border-top: 1px solid #333340;
 }
+
+/* === Poll Context Links === */
+
+.poll-links-section {
+  margin-top: 1rem;
+}
+
+.poll-links {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0 0;
+}
+
+.poll-links a {
+  color: #5e8c61;
+  text-decoration: none;
+}
+
+.poll-links a:hover {
+  color: #00cc00;
+}
