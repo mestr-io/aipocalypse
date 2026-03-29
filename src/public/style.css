@@ -536,3 +536,55 @@ label {
   color: #5e8c61;
   font-size: 0.9em;
 }
+
+/* === Delete Slide-Reveal === */
+
+.delete-slide {
+  overflow: hidden;
+  display: inline-block;
+}
+
+#delete-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.delete-slide-track {
+  display: flex;
+  transition: transform 0.3s ease;
+}
+
+#delete-toggle:checked ~ .delete-slide-track {
+  transform: translateX(-100%);
+}
+
+.delete-slide-initial,
+.delete-slide-confirm {
+  min-width: 100%;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.delete-slide-confirm {
+  display: flex;
+  gap: 0.75rem;
+  padding-left: 1rem;
+}
+
+/* === Danger Button === */
+
+.btn-danger {
+  background: #aa4444;
+  color: #cccccc;
+  border: 1px solid #aa4444;
+  cursor: pointer;
+  padding: 0.4rem 0.8rem;
+  font-family: "Source Code Pro", monospace;
+  font-size: 0.9rem;
+}
+
+.btn-danger:hover {
+  background: #cc5555;
+  border-color: #cc5555;
+}

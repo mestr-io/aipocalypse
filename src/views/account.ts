@@ -21,8 +21,19 @@ export function accountPage(user: User): string {
 
     <p>Permanently delete your account and all your votes. This cannot be undone.</p>
 
-    <form method="POST" action="/account/delete" onsubmit="return confirm('Are you sure? This will permanently delete your account and all your votes.');">
-      <button type="submit" class="btn btn-danger">Delete my account</button>
+    <form method="POST" action="/account/delete">
+      <div class="delete-slide">
+        <input type="checkbox" id="delete-toggle" />
+        <div class="delete-slide-track">
+          <div class="delete-slide-initial">
+            <label for="delete-toggle" class="btn btn-danger">Delete my account</label>
+          </div>
+          <div class="delete-slide-confirm">
+            <label for="delete-toggle" class="btn">No... keep my account</label>
+            <button type="submit" class="btn btn-danger">Yes, delete my account</button>
+          </div>
+        </div>
+      </div>
     </form>
 
     <p class="section-heading"><a href="/auth/logout">Logout</a></p>

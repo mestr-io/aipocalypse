@@ -33,10 +33,10 @@
 
 ## 6. Delete slide-reveal
 
-- [ ] 6.1 Add `.delete-slide`, `.delete-slide-track`, `#delete-toggle`, and `.btn-danger` CSS rules to `src/public/style.css`
-- [ ] 6.2 Replace the `confirm()` form in `src/views/account.ts` with the checkbox slide-reveal HTML structure
-- [ ] 6.3 Update `src/views/account.test.ts` — test that slide-reveal elements are present, confirm dialog `onsubmit` is removed, form action is preserved
-- [ ] 6.4 Verify account tests pass with `bun test src/views/account.test.ts`
+- [x] 6.1 Add `.delete-slide`, `.delete-slide-track`, `#delete-toggle`, and `.btn-danger` CSS rules to `src/public/style.css`
+- [x] 6.2 Replace the `confirm()` form in `src/views/account.ts` with the checkbox slide-reveal HTML structure
+- [x] 6.3 Update `src/views/account.test.ts` — test that slide-reveal elements are present, confirm dialog `onsubmit` is removed, form action is preserved
+- [x] 6.4 Verify account tests pass with `bun test src/views/account.test.ts`
 
 ## 7. Full test suite
 
