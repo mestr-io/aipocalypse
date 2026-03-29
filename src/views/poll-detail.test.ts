@@ -30,9 +30,10 @@ describe("renderLinks", () => {
     expect(html).toContain(">First Link</a>");
     expect(html).toContain(">Second Link</a>");
     expect(html).toContain(">Third Link</a>");
-    // Should be wrapped in a <ul>
-    expect(html).toStartWith('<ul class="poll-links">');
-    expect(html).toEndWith("</ul>");
+    // Should be wrapped in a section div with label
+    expect(html).toStartWith('<div class="poll-links-section">');
+    expect(html).toContain("Related info:");
+    expect(html).toEndWith("</ul></div>");
   });
 
   test("ignores lines that do not match [Label](url) format", () => {
@@ -138,24 +139,24 @@ describe("pollDetailPage", () => {
     expect(html).toContain(">Blog</a>");
   });
 
-  test("links section appears after poll body", () => {
+  test("links section appears after poll-total", () => {
     const links = "[Reference](https://example.com)";
     const html = pollDetailPage(makePoll({ links }));
-    const bodyIndex = html.indexOf("poll-body");
+    const totalIndex = html.indexOf("poll-total");
     const linksIndex = html.indexOf("poll-links");
-    expect(bodyIndex).toBeGreaterThan(-1);
+    expect(totalIndex).toBeGreaterThan(-1);
     expect(linksIndex).toBeGreaterThan(-1);
-    expect(linksIndex).toBeGreaterThan(bodyIndex);
+    expect(linksIndex).toBeGreaterThan(totalIndex);
   });
 
-  test("links section appears before poll options", () => {
+  test("links section appears before back link", () => {
     const links = "[Reference](https://example.com)";
     const html = pollDetailPage(makePoll({ links }));
     const linksIndex = html.indexOf("poll-links");
-    const optionsIndex = html.indexOf("poll-options");
+    const backIndex = html.indexOf("Back to predictions");
     expect(linksIndex).toBeGreaterThan(-1);
-    expect(optionsIndex).toBeGreaterThan(-1);
-    expect(linksIndex).toBeLessThan(optionsIndex);
+    expect(backIndex).toBeGreaterThan(-1);
+    expect(linksIndex).toBeLessThan(backIndex);
   });
 
   test("no links section when links contain only malformed lines", () => {

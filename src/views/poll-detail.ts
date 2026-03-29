@@ -10,7 +10,7 @@ import type { User } from "../db/queries/users";
 export function renderLinks(links: string): string {
   if (!links || !links.trim()) return "";
 
-  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  const linkPattern = /\[([^\]]+)\]\s*\(\s*(https?:\/\/[^)]+)\)/g;
   const matches = [...links.matchAll(linkPattern)];
 
   if (matches.length === 0) return "";
@@ -21,7 +21,7 @@ export function renderLinks(links: string): string {
     return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a></li>`;
   });
 
-  return `<ul class="poll-links">${items.join("")}</ul>`;
+  return `<div class="poll-links-section"><span class="dimmed">Related info:</span><ul class="poll-links">${items.join("")}</ul></div>`;
 }
 
 /**
@@ -145,7 +145,6 @@ export function pollDetailPage(
     ${statusLabel}
     ${dueLabel}
     <div class="poll-body">${escapeHtml(poll.body)}</div>
-    ${renderLinks(poll.links)}
     ${authPrompt}
     ${formOpen}
     <div class="poll-options">
@@ -155,6 +154,7 @@ export function pollDetailPage(
     ${voteMessage}
     ${voteScript}
     <p class="poll-total dimmed">${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}</p>
+    ${renderLinks(poll.links)}
     <p><a href="/" class="dimmed">&larr; Back to predictions</a></p>
   `;
 
