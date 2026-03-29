@@ -13,9 +13,9 @@
 
 ## 3. Bulk voted polls query
 
-- [ ] 3.1 Add `getUserVotedPollIds(userId: number): number[]` to `src/db/queries/votes.ts` — `SELECT DISTINCT pollId FROM votes WHERE userId = ?`
-- [ ] 3.2 Write tests for `getUserVotedPollIds` in `src/db/queries/votes.test.ts` — user with votes, user with no votes, multiple polls
-- [ ] 3.3 Verify votes query tests pass with `bun test src/db/queries/votes.test.ts`
+- [x] 3.1 Add `getUserVotedPollIds(userId: number): number[]` to `src/db/queries/votes.ts` — `SELECT DISTINCT pollId FROM votes WHERE userId = ?`
+- [x] 3.2 Write tests for `getUserVotedPollIds` in `src/db/queries/votes.test.ts` — user with votes, user with no votes, multiple polls
+- [x] 3.3 Verify votes query tests pass with `bun test src/db/queries/votes.test.ts`
 
 ## 4. Voted badge on poll list cards
 
