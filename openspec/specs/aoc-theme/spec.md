@@ -14,7 +14,13 @@ The CSS SHALL implement a visual style inspired by Advent of Code with the follo
 
 The header for logged-in users SHALL display the user's hash identity with green-colored text segments and per-segment-colored square glyphs, linking to `/account`. The header for logged-out users SHALL continue to display the login link.
 
-The account page SHALL have a visually separated logout section, using a top border and spacing consistent with the `.section-heading` pattern.
+The account page SHALL have a visually separated logout section, using a top border and spacing consistent with the `.section-heading` pattern. Account page sections (export, delete, logout) SHALL have `margin-top: 2rem` between them for adequate vertical breathing room.
+
+Context links in `.poll-links a` SHALL use dimmed green (`#5e8c61`) by default and brighten to `#00cc00` on hover, distinguishing them from primary navigation links.
+
+The `.voted-badge` class SHALL render text in dimmed green (`#5e8c61`) with `font-size: 0.9em`.
+
+The account page delete section SHALL use an inline CSS-only slide-reveal pattern instead of a browser `confirm()` dialog. The `.delete-slide` container uses `overflow: hidden` with a fixed width. A hidden checkbox toggles a `.delete-slide-track` that shifts via `transform: translateX` to reveal confirmation buttons: "[No... keep my account]" in green and "[Yes, delete my account]" in red (`.btn-danger` with background `#aa4444`, hover `#cc5555`).
 
 #### Scenario: Dark background renders
 - **WHEN** any page loads in a browser
@@ -44,6 +50,38 @@ The account page SHALL have a visually separated logout section, using a top bor
 #### Scenario: Account page logout separation
 - **WHEN** a logged-in user views the account page
 - **THEN** the logout link is visually separated from the delete-account section by a top border and vertical spacing
+
+#### Scenario: Account page section spacing
+- **WHEN** a logged-in user views the account page
+- **THEN** the export, delete, and logout sections have `margin-top: 2rem` between them
+
+#### Scenario: Poll context links use dimmed green
+- **WHEN** context links are rendered on a poll detail page
+- **THEN** `.poll-links a` links appear in `#5e8c61` and change to `#00cc00` on hover
+
+#### Scenario: Voted badge styling
+- **WHEN** a voted badge is rendered on a poll list card
+- **THEN** the badge text is `#5e8c61` with `font-size: 0.9em`
+
+#### Scenario: Delete slide-reveal initial state
+- **WHEN** a logged-in user views the account page
+- **THEN** the delete section shows a "Delete my account" button and the confirmation buttons are hidden (clipped by `overflow: hidden`)
+
+#### Scenario: Delete slide-reveal activated
+- **WHEN** the user clicks "Delete my account"
+- **THEN** the track slides left to reveal "[No... keep my account]" (green) and "[Yes, delete my account]" (red, `.btn-danger` background `#aa4444`)
+
+#### Scenario: Delete slide-reveal cancelled
+- **WHEN** the user clicks "[No... keep my account]"
+- **THEN** the track slides back to the initial state showing only the "Delete my account" button
+
+#### Scenario: Delete slide-reveal confirmed
+- **WHEN** the user clicks "[Yes, delete my account]"
+- **THEN** the form submits a POST to `/account/delete`
+
+#### Scenario: Delete slide graceful degradation
+- **WHEN** CSS fails to load
+- **THEN** both the initial button and the confirmation buttons are visible, and the form still submits correctly via the submit button
 
 ### Requirement: Deleted poll row styling
 The CSS SHALL provide styling for soft-deleted poll rows in the admin dashboard. Deleted rows SHALL have strikethrough text on the title and a muted visual treatment to distinguish them from active polls.

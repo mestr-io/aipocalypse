@@ -1,7 +1,7 @@
 ## Requirements
 
 ### Requirement: Active poll list on home page
-The application SHALL display a list of all active polls on the home page (`GET /`). Each poll entry SHALL show the poll title, a preview of the description, context links (if any), the due date, and the total number of votes cast. If a poll has context links, they SHALL be rendered as a list of clickable `<a>` elements between the body preview and the meta row, each opening in a new tab (`target="_blank"`) with `rel="noopener noreferrer"`.
+The application SHALL display a list of all active polls on the home page (`GET /`). Each poll entry SHALL show the poll title, a preview of the description, the due date, and the total number of votes cast. For authenticated users, each poll card SHALL also display a `[voted]` badge if the user has previously voted on that poll. Context links SHALL NOT be rendered on poll list cards — they are shown only on the poll detail page.
 
 #### Scenario: Home page with active polls
 - **WHEN** a browser requests `GET /` and active polls exist
@@ -15,20 +15,24 @@ The application SHALL display a list of all active polls on the home page (`GET 
 - **WHEN** a browser requests `GET /` and polls with status `hidden` or `done` exist
 - **THEN** those polls are NOT included in the list
 
-#### Scenario: Poll card renders context links
+#### Scenario: Poll card does not render context links
 - **WHEN** a poll card is rendered for a poll that has context links
-- **THEN** the card displays the links as a `<ul>` list between the body preview and the meta row, with each link opening in a new tab
+- **THEN** the card SHALL NOT display any links section; links are only shown on the poll detail page
 
-#### Scenario: Poll card with no links
-- **WHEN** a poll card is rendered for a poll with an empty links field
-- **THEN** no links section is rendered on the card
+#### Scenario: Voted badge shown for authenticated user
+- **WHEN** an authenticated user views the home page and has voted on a poll
+- **THEN** the poll card for that poll SHALL display a `<span class="voted-badge">[voted]</span>` on the meta row in dimmed green (`#5e8c61`)
 
-#### Scenario: Poll card with malformed links
-- **WHEN** a poll's links field contains lines that do not match the `[Label](url)` format
-- **THEN** those lines are silently ignored and only valid entries are rendered
+#### Scenario: No voted badge for unauthenticated user
+- **WHEN** an unauthenticated user views the home page
+- **THEN** no voted badges are displayed on any poll cards
+
+#### Scenario: No voted badge for polls user has not voted on
+- **WHEN** an authenticated user views the home page and has NOT voted on a particular poll
+- **THEN** that poll card SHALL NOT display a voted badge
 
 ### Requirement: Poll detail page
-The application SHALL render a poll detail page at `GET /poll/:id` showing the poll title, full description, context links (if any), due date, and all answer options with vote distribution displayed as AoC-style progress bars. Each option SHALL be rendered as a clickable div (not a radio button). The user's current vote SHALL be indicated by a light green background. No radio buttons or gold chevron markers SHALL be used. If the poll has context links, they SHALL be rendered as a list of clickable `<a>` elements between the poll body and the voting options. Each link SHALL open in a new browser tab (`target="_blank"`) with `rel="noopener noreferrer"`.
+The application SHALL render a poll detail page at `GET /poll/:id` showing the poll title, full description, due date, and all answer options with vote distribution displayed as AoC-style progress bars. Each option SHALL be rendered as a clickable div (not a radio button). The user's current vote SHALL be indicated by a light green background. No radio buttons or gold chevron markers SHALL be used. If the poll has context links, they SHALL be rendered as a "Related info:" labeled list of clickable `<a>` elements below the total vote count and above the "Back to predictions" link. Each link SHALL open in a new browser tab (`target="_blank"`) with `rel="noopener noreferrer"`). Links SHALL use dimmed green (`#5e8c61`) by default, brightening to `#00cc00` on hover.
 
 #### Scenario: Poll detail renders with vote bars
 - **WHEN** a browser requests `GET /poll/:id` for an active poll
@@ -78,9 +82,9 @@ The application SHALL render a poll detail page at `GET /poll/:id` showing the p
 - **WHEN** an authenticated user views a poll with JavaScript disabled
 - **THEN** the form SHALL still function — the hidden input contains the current vote's question ID, and the submit button is NOT disabled (JS adds the `disabled` attribute on page load)
 
-#### Scenario: Poll detail renders context links
+#### Scenario: Poll detail renders context links below vote total
 - **WHEN** a browser requests `GET /poll/:id` for a poll that has context links
-- **THEN** the page renders a list of clickable links between the poll body and the voting options, each with `target="_blank"` and `rel="noopener noreferrer"`
+- **THEN** the page renders a "Related info:" label followed by a list of clickable links below the total vote count and above the "Back to predictions" link, each with `target="_blank"` and `rel="noopener noreferrer"`, styled in dimmed green (`#5e8c61`) with `#00cc00` on hover
 
 #### Scenario: Poll detail with no links
 - **WHEN** a browser requests `GET /poll/:id` for a poll with an empty links field
@@ -122,3 +126,18 @@ The poll detail page SHALL include an inline `<script>` block that handles optio
 #### Scenario: Only one option selected at a time
 - **WHEN** user clicks on an option
 - **THEN** the `option-selected` class SHALL be removed from all other options and added only to the clicked option
+
+### Requirement: Bulk voted polls query
+The application SHALL provide a `getUserVotedPollIds(userId: number)` function in `src/db/queries/votes.ts` that returns an array of poll IDs the user has voted on.
+
+#### Scenario: User with votes
+- **WHEN** `getUserVotedPollIds(userId)` is called for a user who has voted on 3 polls
+- **THEN** the function returns an array containing those 3 poll IDs
+
+#### Scenario: User with no votes
+- **WHEN** `getUserVotedPollIds(userId)` is called for a user who has not voted on any polls
+- **THEN** the function returns an empty array
+
+#### Scenario: Only active polls included
+- **WHEN** `getUserVotedPollIds(userId)` is called and the user has voted on a soft-deleted poll
+- **THEN** the deleted poll's ID is still included (votes are preserved; filtering is the view's concern)
