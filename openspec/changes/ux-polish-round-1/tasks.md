@@ -28,8 +28,8 @@
 
 ## 5. Account page section spacing
 
-- [ ] 5.1 Add CSS rule for account page `.section-heading` margin — `margin-top: 2rem` in `src/public/style.css`
-- [ ] 5.2 Verify account page renders correctly (visual check or existing tests)
+- [x] 5.1 Add CSS rule for account page `.section-heading` margin — `margin-top: 2rem` in `src/public/style.css`
+- [x] 5.2 Verify account page renders correctly (visual check or existing tests)
 
 ## 6. Delete slide-reveal
 

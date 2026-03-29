@@ -17,7 +17,7 @@ export function accountPage(user: User): string {
 
     <p><a href="/account/export" class="btn">Download my data</a></p>
 
-    <h2 class="danger">Delete account</h2>
+    <h2 class="section-heading danger">Delete account</h2>
 
     <p>Permanently delete your account and all your votes. This cannot be undone.</p>
 
