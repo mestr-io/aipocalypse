@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { signSession, SESSION_COOKIE, STATE_COOKIE } from "./session";
-import { upsertUser, isHashedIdBanned } from "../db/queries/users";
+import { upsertUser, isHashedIdBanned, getUserById } from "../db/queries/users";
 import { computeHashedId } from "../db/hash";
+import { log } from "../lib/logger";
 
 /**
  * GitHub user profile from the API response.
@@ -143,11 +144,14 @@ auth.get("/callback", async (c) => {
 
   // Reject banned users before upserting
   if (isHashedIdBanned(hashedId)) {
+    log.info("auth.login.banned", { userId: hashedId });
     return c.text("Your account has been banned.", 403);
   }
 
   // Upsert user in DB — only hashedId is stored, token is discarded
   const userId = upsertUser(hashedId);
+
+  log.info("auth.login", { userId: hashedId });
 
   // Set session cookie
   const sessionToken = await signSession(userId);
@@ -165,7 +169,17 @@ auth.get("/callback", async (c) => {
  * GET /auth/logout
  * Clear session cookie, redirect home.
  */
-auth.get("/logout", (c) => {
+auth.get("/logout", async (c) => {
+  const token = getCookie(c, SESSION_COOKIE);
+  let hashedId: string | undefined;
+  if (token) {
+    const uid = await verifySession(token);
+    if (uid) {
+      const user = getUserById(uid);
+      if (user) hashedId = user.hashedId;
+    }
+  }
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  log.info("auth.logout", hashedId ? { userId: hashedId } : undefined);
   return c.redirect("/");
 });

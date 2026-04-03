@@ -22,6 +22,7 @@ Image=docker.io/CHANGEME/aipocalypse:latest
 PublishPort=127.0.0.1:5555:5555
 Volume=%h/aipocalypse/data:/app/data:Z
 EnvironmentFile=%h/aipocalypse/.env
+UserNS=keep-id
 Label=io.containers.autoupdate=registry
 AutoUpdate=registry
 

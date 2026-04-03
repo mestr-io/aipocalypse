@@ -104,7 +104,7 @@ systemctl --user status
 
 > This section runs on your **local dev machine**, not the VPS.
 
-Build the ARM64 image using the existing Dockerfile:
+Build the ARM64 image using the existing Containerfile:
 
 ```bash
 podman build --platform linux/arm64 -t docker.io/<your-dockerhub-user>/aipocalypse:latest .
@@ -516,6 +516,7 @@ ls -la ~/aipocalypse/data/
 
 # Try running the container manually to see errors
 podman run --rm \
+  --userns=keep-id \
   -p 127.0.0.1:5555:5555 \
   -v ~/aipocalypse/data:/app/data:Z \
   --env-file ~/aipocalypse/.env \
@@ -531,12 +532,17 @@ ss -tlnp | grep 5555
 
 ### Permission denied on data directory
 
-Rootless Podman maps UIDs into a subordinate range. The container's `bun` user
-(UID 1000) may not map to the host's UID 1000.
+Rootless Podman maps UIDs into a subordinate range. The Quadlet file includes
+`UserNS=keep-id` which maps the host user's UID to the same UID inside the
+container, avoiding permission issues. If you still hit problems:
 
 ```bash
-# Fix ownership using podman unshare
-podman unshare chown -R 1000:1000 ~/aipocalypse/data/
+# Verify the data directory is owned by the deploy user
+ls -la ~/aipocalypse/data/
+
+# It should be owned by the deploy user, NOT by a numeric UID like 100999
+# If ownership is wrong, fix it:
+chown -R $(id -u):$(id -g) ~/aipocalypse/data/
 ```
 
 ### Image pull fails

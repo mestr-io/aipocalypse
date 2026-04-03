@@ -10,5 +10,5 @@ scripts/
 nginx/
 *.md
 Makefile
-.dockerignore
-Dockerfile
+.containerignore
+Containerfile

@@ -11,6 +11,7 @@ import { verifySession, SESSION_COOKIE } from "./auth/session";
 import { getUserById, exportUserData, hardDeleteUser, type User } from "./db/queries/users";
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
 import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./db/queries/votes";
+import { log } from "./lib/logger";
 
 // ---------------------------------------------------------------------------
 // App
@@ -98,6 +99,8 @@ app.get("/account/export", (c) => {
   const data = exportUserData(user.id);
   if (!data) return c.text("User not found.", 404);
 
+  log.info("user.data.exported", { userId: user.hashedId });
+
   c.header("Content-Disposition", `attachment; filename="aipocalypse-data-${user.hashedId}.json"`);
   return c.json(data);
 });
@@ -107,6 +110,7 @@ app.post("/account/delete", (c) => {
   const user = c.get("user" as never) as User | null;
   if (!user) return c.redirect("/auth/login");
 
+  log.info("user.account.deleted", { userId: user.hashedId });
   hardDeleteUser(user.id);
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
   return c.redirect("/");
@@ -150,6 +154,8 @@ app.post("/vote/:pollId", async (c) => {
 
   // Cast or update the vote
   castVote(user.id, pollId, questionId);
+
+  log.info("user.vote.cast", { pollId, userId: user.hashedId });
 
   return c.redirect(`/poll/${pollId}`);
 });

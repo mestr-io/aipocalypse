@@ -6,6 +6,7 @@ import { adminLoginPage } from "../views/admin/login";
 import { adminDashboardPage } from "../views/admin/dashboard";
 import { adminPollFormPage, type AnswerValue } from "../views/admin/poll-form";
 import { createPoll, listPolls, getPollForEdit, updatePoll } from "../db/queries/polls";
+import { log } from "../lib/logger";
 
 const admin = new Hono();
 
@@ -33,6 +34,7 @@ admin.post("/login", async (c) => {
 
   const token = await signToken();
   setCookie(c, COOKIE_NAME, token, COOKIE_OPTIONS);
+  log.info("admin.login");
   return c.redirect("/admin");
 });
 
@@ -42,6 +44,7 @@ admin.post("/login", async (c) => {
 
 admin.get("/logout", (c) => {
   deleteCookie(c, COOKIE_NAME, { path: "/admin" });
+  log.info("admin.logout");
   return c.redirect("/admin/login");
 });
 
@@ -96,7 +99,7 @@ admin.post("/polls", async (c) => {
     );
   }
 
-  createPoll(
+  const pollId = createPoll(
     {
       title,
       body: bodyText,
@@ -107,6 +110,7 @@ admin.post("/polls", async (c) => {
     answers
   );
 
+  log.info("admin.poll.created", { pollId, title });
   return c.redirect("/admin");
 });
 
@@ -202,6 +206,7 @@ admin.post("/polls/:id", async (c) => {
     answerPairs
   );
 
+  log.info("admin.poll.updated", { pollId, title });
   return c.redirect("/admin");
 });
 

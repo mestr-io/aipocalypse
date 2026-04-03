@@ -16,7 +16,7 @@ The guide SHALL include instructions for creating a deploy user, enabling linger
 - **THEN** the user's services persist after logout via `loginctl enable-linger`
 
 ### Requirement: Hosting guide covers building and pushing ARM images
-The guide SHALL document how to build an ARM64 container image from the existing Dockerfile on a dev machine and push it to Docker Hub.
+The guide SHALL document how to build an ARM64 container image from the existing Containerfile on a dev machine and push it to Docker Hub.
 
 #### Scenario: User builds and pushes an ARM image
 - **WHEN** the user runs the build command on their dev machine

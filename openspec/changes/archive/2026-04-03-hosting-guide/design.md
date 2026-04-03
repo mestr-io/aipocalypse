@@ -1,6 +1,6 @@
 ## Context
 
-AIPocalypse is a Bun/Hono server-side rendered app with an SQLite database. It already has a working multi-stage Dockerfile (`oven/bun:1-alpine`), a docker-entrypoint.sh that runs migrations then starts the server, and an nginx location-block config for reverse proxying at `/labs/aipocalypse/`.
+AIPocalypse is a Bun/Hono server-side rendered app with an SQLite database. It already has a working multi-stage Containerfile (`oven/bun:1-alpine`), an entrypoint.sh that runs migrations then starts the server, and an nginx location-block config for reverse proxying at `/labs/aipocalypse/`.
 
 The target environment is a shared Hetzner CAX (ARM64) VPS running Ubuntu, where nginx already serves other apps under the mestr.io domain with TLS via certbot.
 
@@ -18,7 +18,7 @@ The target environment is a shared Hetzner CAX (ARM64) VPS running Ubuntu, where
 - CI/CD pipeline setup (GitHub Actions) — may be added later
 - Multi-node / HA deployment
 - Monitoring/alerting infrastructure
-- Changes to application code or the Dockerfile
+- Changes to application code or the Containerfile
 
 ## Decisions
 
@@ -79,6 +79,6 @@ The target environment is a shared Hetzner CAX (ARM64) VPS running Ubuntu, where
 
 - **[Rootless UID mapping with volumes]** Rootless Podman maps container UIDs into a subordinate range. The `bun` user (UID 1000) inside the container may not map to the host user's UID 1000. → Mitigation: The `:Z` volume flag handles SELinux. For UID issues, document `podman unshare chown` as the fix.
 
-- **[Cross-compilation build time]** QEMU-based cross-compilation is slower than native builds. → Mitigation: The Dockerfile is minimal (install deps + copy source), so build times are acceptable. Document as a known trade-off.
+- **[Cross-compilation build time]** QEMU-based cross-compilation is slower than native builds. → Mitigation: The Containerfile is minimal (install deps + copy source), so build times are acceptable. Document as a known trade-off.
 
 - **[Single point of failure for SQLite]** No replication, no automated backups. → Mitigation: Document a manual backup procedure. Automated backups are a future enhancement.
