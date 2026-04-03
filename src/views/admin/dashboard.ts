@@ -1,4 +1,4 @@
-import { layout } from "../layout";
+import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 import type { PollRow } from "../../db/queries/polls";
 
@@ -53,8 +53,7 @@ export function adminDashboardPage(polls: PollRow[]): string {
         ${pollRows}
       </tbody>
     </table>
-    <p style="margin-top: 1rem;"><a href="/admin/logout" class="admin-dimmed">Logout</a></p>
   `;
 
-  return layout(content, { title: "Admin" });
+  return adminLayout(content, { title: "Admin", authenticated: true });
 }

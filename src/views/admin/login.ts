@@ -1,4 +1,4 @@
-import { layout } from "../layout";
+import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 
 export interface AdminLoginOptions {
@@ -27,5 +27,5 @@ export function adminLoginPage(options: AdminLoginOptions = {}): string {
     </form>
   `;
 
-  return layout(content, { title: "Admin Login" });
+  return adminLayout(content, { title: "Admin Login" });
 }

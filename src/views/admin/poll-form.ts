@@ -1,4 +1,4 @@
-import { layout } from "../layout";
+import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 
 export interface AnswerValue {
@@ -136,5 +136,5 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     </script>
   `;
 
-  return layout(content, { title: pageTitle });
+  return adminLayout(content, { title: pageTitle, authenticated: true });
 }
