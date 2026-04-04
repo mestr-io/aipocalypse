@@ -14,7 +14,7 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 │  ├── loginctl enable-linger                                                │
 │  ├── ~/.config/containers/systemd/aipocalypse.container  (Quadlet)         │
 │  │   └── podman container                                                  │
-│  │       ├── Image: docker.io/<user>/aipocalypse:latest                    │
+│  │       ├── Image: ghcr.io/<user>/aipocalypse:v0.1.0                      │
 │  │       ├── Port: 127.0.0.1:5555:5555                                    │
 │  │       ├── Volume: ~/aipocalypse/data:/app/data:Z                        │
 │  │       ├── EnvironmentFile: ~/aipocalypse/.env                           │
@@ -33,7 +33,7 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 - Hetzner CAX ARM VPS running Debian 13 (trixie)
 - SSH access with a sudo-capable user
 - nginx already installed and serving other sites on the domain
-- A Docker Hub account for pushing images
+- A GitHub account for pushing images to GHCR (GitHub Container Registry)
 - The domain (`mestr.io`) with DNS pointing to the VPS
 
 ---
@@ -104,10 +104,16 @@ systemctl --user status
 
 > This section runs on your **local dev machine**, not the VPS.
 
-Build the ARM64 image using the existing Containerfile:
+Build and push a versioned multi-arch image using the Makefile target:
 
 ```bash
-podman build --platform linux/arm64 -t docker.io/<your-dockerhub-user>/aipocalypse:latest .
+make image-release TAG=v0.1.0
+```
+
+This publishes:
+
+```text
+ghcr.io/<your-github-user>/aipocalypse:v0.1.0
 ```
 
 > **Cross-compilation note**: This uses QEMU user-static emulation under the
@@ -121,29 +127,26 @@ podman build --platform linux/arm64 -t docker.io/<your-dockerhub-user>/aipocalyp
 > sudo apt install qemu-user-static
 > ```
 
-Log in to Docker Hub:
+Before the first push, log in to GHCR:
 
 ```bash
-podman login docker.io
+podman login ghcr.io -u <your-github-user>
 ```
 
-Push the image:
-
-```bash
-podman push docker.io/<your-dockerhub-user>/aipocalypse:latest
-```
+Use a GitHub Personal Access Token (classic) with at least `write:packages`.
 
 ### Tagging strategy
 
-For production deployments, tag with both `latest` and a specific version:
+For production deployments, use immutable version tags only (no `latest`).
+For example:
 
 ```bash
-podman tag docker.io/<user>/aipocalypse:latest docker.io/<user>/aipocalypse:v1.0.0
-podman push docker.io/<user>/aipocalypse:v1.0.0
+make image-release TAG=v0.1.0
+make image-release TAG=v0.1.1
 ```
 
-This lets you pin a specific version for rollbacks while `latest` always points
-to the most recent release.
+Then pin the exact version in the Quadlet file. This makes deployments
+reproducible and rollbacks explicit.
 
 ---
 
@@ -168,6 +171,9 @@ GITHUB_CLIENT_SECRET=your_github_client_secret
 # Admin panel password
 ADMIN_PASSWORD=your_admin_password
 
+# Hash pepper for user identity derivation (generate with: openssl rand -hex 32)
+HASH_PEPPER=generate_a_random_secret_here
+
 # SQLite database path (inside container)
 DATABASE_PATH=data/aipocalypse.db
 EOF
@@ -182,7 +188,7 @@ chmod 600 ~/aipocalypse/.env
 Pull the container image:
 
 ```bash
-podman pull docker.io/<your-dockerhub-user>/aipocalypse:latest
+podman pull ghcr.io/<your-github-user>/aipocalypse:v0.1.0
 ```
 
 Verify the image is available:
@@ -211,11 +217,14 @@ in the repository for the full contents):
 cp deploy/aipocalypse.container ~/.config/containers/systemd/
 ```
 
-> **Important**: Edit the `Image=` line to replace `CHANGEME` with your actual
-> Docker Hub username:
+> This assumes the repository has been cloned onto the VPS. If not, either
+> clone it first or copy just this file over with `scp`.
+>
+> **Important**: Edit the `Image=` line to replace `CHANGEME` and the version
+> tag with your actual GitHub username and release version:
 >
 > ```bash
-> sed -i 's/CHANGEME/<your-dockerhub-user>/' ~/.config/containers/systemd/aipocalypse.container
+> sed -i 's|ghcr.io/CHANGEME/aipocalypse:v0.1.0|ghcr.io/<your-github-user>/aipocalypse:v0.1.0|' ~/.config/containers/systemd/aipocalypse.container
 > ```
 
 Reload systemd to pick up the new Quadlet file:
@@ -350,20 +359,22 @@ sudo certbot renew --dry-run
 
 ## 8. Deployment
 
-### Option A: Manual deployment
+### Manual deployment
 
-When you push a new image from your dev machine:
+When you want to release a new version from your dev machine:
 
 ```bash
 # On your dev machine
-podman build --platform linux/arm64 -t docker.io/<user>/aipocalypse:latest .
-podman push docker.io/<user>/aipocalypse:latest
+make image-release TAG=v0.1.1
 ```
 
-Then on the VPS (as the `deploy` user):
+Then on the VPS (as the `deploy` user), update the pinned version in the
+Quadlet file, pull the new image, and restart:
 
 ```bash
-podman pull docker.io/<user>/aipocalypse:latest
+sed -i 's|aipocalypse:v0.1.0|aipocalypse:v0.1.1|' ~/.config/containers/systemd/aipocalypse.container
+podman pull ghcr.io/<user>/aipocalypse:v0.1.1
+systemctl --user daemon-reload
 systemctl --user restart aipocalypse
 ```
 
@@ -373,37 +384,6 @@ Verify:
 systemctl --user status aipocalypse
 curl -s http://localhost:5555 | head -5
 ```
-
-### Option B: Automatic deployment with podman auto-update
-
-The Quadlet file already includes the `io.containers.autoupdate=registry` label.
-Enable the auto-update timer to check for new images periodically:
-
-```bash
-systemctl --user enable --now podman-auto-update.timer
-```
-
-Check the timer schedule:
-
-```bash
-systemctl --user list-timers podman-auto-update.timer
-```
-
-By default, `podman-auto-update` runs daily. To check manually:
-
-```bash
-# Dry run — see what would be updated
-podman auto-update --dry-run
-
-# Actually update
-podman auto-update
-```
-
-How it works:
-1. The timer triggers `podman auto-update`
-2. Podman checks Docker Hub for a newer digest of the `latest` tag
-3. If the image changed, Podman pulls the new image and restarts the container
-4. systemd handles the restart via the Quadlet service
 
 ### Post-deploy verification
 
@@ -449,16 +429,13 @@ The SQLite database lives at `~/aipocalypse/data/aipocalypse.db` on the host.
 cp ~/aipocalypse/data/aipocalypse.db ~/backups/aipocalypse-$(date +%Y%m%d-%H%M%S).db
 ```
 
-For a consistent backup while the app is running, use SQLite's `.backup` command:
+For a consistent backup while the app is running, stop the service briefly,
+copy the database, then start it again:
 
 ```bash
-podman exec systemd-aipocalypse bun -e "
-  const db = new (require('bun:sqlite').Database)('data/aipocalypse.db');
-  db.exec('VACUUM INTO \"/app/data/backup.db\"');
-  db.close();
-"
-cp ~/aipocalypse/data/backup.db ~/backups/aipocalypse-$(date +%Y%m%d-%H%M%S).db
-rm ~/aipocalypse/data/backup.db
+systemctl --user stop aipocalypse
+cp ~/aipocalypse/data/aipocalypse.db ~/backups/aipocalypse-$(date +%Y%m%d-%H%M%S).db
+systemctl --user start aipocalypse
 ```
 
 ### Access a container shell
@@ -484,16 +461,14 @@ systemctl --user stop aipocalypse
 If you tagged releases (e.g., `v1.0.0`, `v1.1.0`):
 
 ```bash
-# Edit the Quadlet file to pin a specific tag
-sed -i 's|aipocalypse:latest|aipocalypse:v1.0.0|' ~/.config/containers/systemd/aipocalypse.container
+# Edit the Quadlet file to pin the previous known-good tag
+sed -i 's|aipocalypse:v1.1.0|aipocalypse:v1.0.0|' ~/.config/containers/systemd/aipocalypse.container
 
-# Reload and restart
+# Pull, reload, and restart
+podman pull ghcr.io/<user>/aipocalypse:v1.0.0
 systemctl --user daemon-reload
 systemctl --user restart aipocalypse
 ```
-
-Remember to change the tag back to `latest` (or the desired version) after the
-issue is resolved.
 
 ---
 
@@ -520,7 +495,7 @@ podman run --rm \
   -p 127.0.0.1:5555:5555 \
   -v ~/aipocalypse/data:/app/data:Z \
   --env-file ~/aipocalypse/.env \
-  docker.io/<user>/aipocalypse:latest
+  ghcr.io/<user>/aipocalypse:v0.1.0
 ```
 
 ### Port conflict
@@ -532,9 +507,11 @@ ss -tlnp | grep 5555
 
 ### Permission denied on data directory
 
-Rootless Podman maps UIDs into a subordinate range. The Quadlet file includes
-`UserNS=keep-id` which maps the host user's UID to the same UID inside the
-container, avoiding permission issues. If you still hit problems:
+Rootless Podman maps UIDs into a subordinate range. The image runs as the
+`bun` user (UID 1000). This works cleanly when the host deploy user is also
+UID 1000. If your deploy user has a different UID/GID, you may need to rebuild
+the image with matching IDs or adjust the runtime user configuration. If you
+still hit problems:
 
 ```bash
 # Verify the data directory is owned by the deploy user
@@ -549,10 +526,10 @@ chown -R $(id -u):$(id -g) ~/aipocalypse/data/
 
 ```bash
 # Check authentication
-podman login docker.io
+podman login ghcr.io -u <your-github-user>
 
 # Try pulling manually
-podman pull docker.io/<user>/aipocalypse:latest
+podman pull ghcr.io/<user>/aipocalypse:v0.1.0
 
 # Check network connectivity
 curl -s https://registry-1.docker.io/v2/ | head -5
