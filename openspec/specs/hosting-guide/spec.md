@@ -23,12 +23,13 @@ The guide SHALL document how to build an ARM64 container image from the existing
 - **THEN** a `linux/arm64` image is created and pushed to Docker Hub
 
 ### Requirement: Hosting guide covers app configuration on VPS
-The guide SHALL document how to create the data directory, environment file, and pull the container image on the VPS.
+The guide SHALL document how to create the data directory, create required Podman secrets for sensitive values, provide non-sensitive configuration, and pull the container image on the VPS.
 
 #### Scenario: User configures the app
 - **WHEN** the user follows the configuration section
 - **THEN** `~/aipocalypse/data/` exists with correct permissions
-- **THEN** `~/aipocalypse/.env` contains all required environment variables
+- **THEN** the Podman secrets for GitHub client secret, admin password, and hash pepper are created
+- **THEN** non-sensitive configuration values required by the container are documented
 - **THEN** the container image is pulled and available locally
 
 ### Requirement: Hosting guide covers Quadlet systemd setup
@@ -55,15 +56,11 @@ The guide SHALL document how to set up TLS via certbot with the nginx plugin, no
 - **THEN** HTTPS is enabled and auto-renewal is configured
 
 ### Requirement: Hosting guide covers deployment workflows
-The guide SHALL document both manual deployment (pull + restart) and automated deployment via `podman auto-update`.
+The guide SHALL document manual deployment for version-pinned GHCR images and SHALL NOT require `latest` tags or `podman auto-update`.
 
 #### Scenario: User deploys manually
-- **WHEN** a new image is pushed to the registry
-- **THEN** the user can pull it and restart the service to deploy
-
-#### Scenario: User enables auto-update
-- **WHEN** the auto-update timer is enabled
-- **THEN** Podman periodically checks the registry and restarts the container when a new image is available
+- **WHEN** a new versioned image is pushed to the registry
+- **THEN** the user can update the pinned image tag, pull it, and restart the service to deploy
 
 ### Requirement: Hosting guide covers operations
 The guide SHALL include a section on common operational tasks: viewing logs, backing up the database, accessing a container shell, restarting the service, and rolling back.
@@ -77,8 +74,8 @@ The guide SHALL include a section on common operational tasks: viewing logs, bac
 - **THEN** a copy of the SQLite database file is saved outside the container volume
 
 ### Requirement: Hosting guide covers troubleshooting
-The guide SHALL include a troubleshooting section covering common failure modes: container won't start, port conflicts, permission errors, and image pull failures.
+The guide SHALL include troubleshooting steps for missing Podman secrets and registry authentication in addition to container startup and permission issues.
 
 #### Scenario: User troubleshoots a failed container
-- **WHEN** the container fails to start
-- **THEN** the guide provides diagnostic steps (check logs, verify env file, check permissions)
+- **WHEN** the container fails to start because a required secret is missing or the image cannot be pulled
+- **THEN** the guide provides diagnostic steps to inspect service logs, verify secret creation, and confirm registry authentication

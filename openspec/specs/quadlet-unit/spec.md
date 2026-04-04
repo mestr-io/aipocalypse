@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Quadlet file defines the container image
-The Quadlet `.container` file SHALL specify the container image from Docker Hub using a fully qualified image reference.
+The Quadlet `.container` file SHALL specify a fully qualified GHCR image reference pinned to an explicit version tag.
 
 #### Scenario: Image reference is resolvable
 - **WHEN** systemd processes the Quadlet file
-- **THEN** Podman can pull the image specified in the `Image=` directive
+- **THEN** Podman can pull the image specified in the `Image=` directive from GHCR
 
 ### Requirement: Quadlet file binds port 5555 to localhost only
 The Quadlet file SHALL publish port 5555 bound to 127.0.0.1 only, not to all interfaces.
@@ -23,12 +23,14 @@ The Quadlet file SHALL mount the host data directory into the container at `/app
 - **THEN** the data is persisted on the host at `~/aipocalypse/data/aipocalypse.db`
 - **THEN** the data survives container recreation
 
-### Requirement: Quadlet file loads environment from file
-The Quadlet file SHALL use `EnvironmentFile=` to load environment variables from the host `.env` file.
+### Requirement: Quadlet file loads sensitive configuration from Podman secrets
+The Quadlet file SHALL mount Podman secrets for `GITHUB_CLIENT_SECRET`, `ADMIN_PASSWORD`, and `HASH_PEPPER`, and SHALL NOT require an environment file containing sensitive values.
 
-#### Scenario: Environment variables are available
-- **WHEN** the container starts
-- **THEN** `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ADMIN_PASSWORD`, and `DATABASE_PATH` are set from the env file
+#### Scenario: Secret files are mounted for the container
+- **WHEN** the container starts through the Quadlet unit
+- **THEN** `/run/secrets/aipocalypse_github_client_secret` is available in the container
+- **THEN** `/run/secrets/aipocalypse_admin_password` is available in the container
+- **THEN** `/run/secrets/aipocalypse_hash_pepper` is available in the container
 
 ### Requirement: Quadlet file configures automatic restart
 The Quadlet file SHALL configure systemd to restart the container on failure.
@@ -36,13 +38,6 @@ The Quadlet file SHALL configure systemd to restart the container on failure.
 #### Scenario: Container restarts after crash
 - **WHEN** the container process exits unexpectedly
 - **THEN** systemd restarts the container automatically
-
-### Requirement: Quadlet file supports auto-update
-The Quadlet file SHALL include the `io.containers.autoupdate=registry` label so that `podman auto-update` can detect and pull new images.
-
-#### Scenario: Auto-update detects new image
-- **WHEN** `podman auto-update --dry-run` is executed after a new image is pushed
-- **THEN** it reports the container as having an available update
 
 ### Requirement: Quadlet file uses home-relative paths
 The Quadlet file SHALL use `%h` (systemd home directory specifier) for all host paths to work with any deploy user's home directory.
