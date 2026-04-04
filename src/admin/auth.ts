@@ -5,10 +5,14 @@
  * The ADMIN_PASSWORD env var is used as the signing key.
  */
 
+import { getEnvOrSecret } from "../lib/config";
+
 function getAdminPassword(): string {
-  const pw = process.env.ADMIN_PASSWORD;
-  if (!pw) throw new Error("ADMIN_PASSWORD environment variable is not set");
-  return pw;
+  return getEnvOrSecret(
+    "ADMIN_PASSWORD",
+    "aipocalypse_admin_password",
+    "ADMIN_PASSWORD environment variable is not set"
+  );
 }
 
 /**

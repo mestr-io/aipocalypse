@@ -4,6 +4,7 @@ import { signSession, SESSION_COOKIE, STATE_COOKIE } from "./session";
 import { upsertUser, isHashedIdBanned, getUserById } from "../db/queries/users";
 import { computeHashedId } from "../db/hash";
 import { log } from "../lib/logger";
+import { getEnvOrSecret } from "../lib/config";
 
 /**
  * GitHub user profile from the API response.
@@ -27,9 +28,11 @@ function getClientId(): string {
 }
 
 function getClientSecret(): string {
-  const secret = process.env.GITHUB_CLIENT_SECRET;
-  if (!secret) throw new Error("GITHUB_CLIENT_SECRET is not set");
-  return secret;
+  return getEnvOrSecret(
+    "GITHUB_CLIENT_SECRET",
+    "aipocalypse_github_client_secret",
+    "GITHUB_CLIENT_SECRET is not set"
+  );
 }
 
 /**

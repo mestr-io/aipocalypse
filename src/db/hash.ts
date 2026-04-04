@@ -10,18 +10,17 @@
  * enumerating ~200M GitHub IDs.
  */
 
+import { getEnvOrSecret } from "../lib/config";
+
 /**
  * Get the HASH_PEPPER from environment. Throws if not set.
  */
 export function getHashPepper(): string {
-  const pepper = process.env.HASH_PEPPER;
-  if (!pepper) {
-    throw new Error(
-      "HASH_PEPPER environment variable is not set. " +
-        "Generate one with: openssl rand -hex 32"
-    );
-  }
-  return pepper;
+  return getEnvOrSecret(
+    "HASH_PEPPER",
+    "aipocalypse_hash_pepper",
+    "HASH_PEPPER environment variable is not set. Generate one with: openssl rand -hex 32"
+  );
 }
 
 /**

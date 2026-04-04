@@ -17,11 +17,13 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 │  │       ├── Image: ghcr.io/<user>/aipocalypse:v0.1.0                      │
 │  │       ├── Port: 127.0.0.1:5555:5555                                    │
 │  │       ├── Volume: ~/aipocalypse/data:/app/data:Z                        │
-│  │       ├── EnvironmentFile: ~/aipocalypse/.env                           │
+│  │       ├── Environment: GITHUB_CLIENT_ID, DATABASE_PATH                  │
+│  │       ├── Secrets: aipocalypse_github_client_secret,                    │
+│  │       │            aipocalypse_admin_password,                          │
+│  │       │            aipocalypse_hash_pepper                              │
 │  │       └── Restart: always                                               │
 │  │                                                                         │
 │  └── ~/aipocalypse/                                                        │
-│      ├── .env                                                              │
 │      └── data/aipocalypse.db                                               │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -160,29 +162,18 @@ Create the application directory and data volume:
 mkdir -p ~/aipocalypse/data
 ```
 
-Create the environment file from the template:
+Create the required Podman secrets:
 
 ```bash
-cat > ~/aipocalypse/.env << 'EOF'
-# GitHub OAuth App credentials
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-
-# Admin panel password
-ADMIN_PASSWORD=your_admin_password
-
-# Hash pepper for user identity derivation (generate with: openssl rand -hex 32)
-HASH_PEPPER=generate_a_random_secret_here
-
-# SQLite database path (inside container)
-DATABASE_PATH=data/aipocalypse.db
-EOF
+printf '%s' 'your_github_client_secret' | podman secret create aipocalypse_github_client_secret -
+printf '%s' 'your_admin_password' | podman secret create aipocalypse_admin_password -
+openssl rand -hex 32 | podman secret create aipocalypse_hash_pepper -
 ```
 
-Lock down the env file (it contains secrets):
+List secrets to confirm they exist:
 
 ```bash
-chmod 600 ~/aipocalypse/.env
+podman secret ls
 ```
 
 Pull the container image:
@@ -226,6 +217,9 @@ cp deploy/aipocalypse.container ~/.config/containers/systemd/
 > ```bash
 > sed -i 's|ghcr.io/CHANGEME/aipocalypse:v0.1.0|ghcr.io/<your-github-user>/aipocalypse:v0.1.0|' ~/.config/containers/systemd/aipocalypse.container
 > ```
+
+If needed, edit the non-sensitive `Environment=` lines in the Quadlet file to set
+`GITHUB_CLIENT_ID` and `DATABASE_PATH` for your deployment.
 
 Reload systemd to pick up the new Quadlet file:
 
@@ -483,18 +477,25 @@ journalctl --user -u aipocalypse -n 100 --no-pager
 # Check if the container exists but failed
 podman ps -a | grep aipocalypse
 
-# Verify the env file exists and is readable
-ls -la ~/aipocalypse/.env
-
 # Verify the data directory exists
 ls -la ~/aipocalypse/data/
+
+# Verify the required secrets exist
+podman secret ls
+podman secret inspect aipocalypse_github_client_secret
+podman secret inspect aipocalypse_admin_password
+podman secret inspect aipocalypse_hash_pepper
 
 # Try running the container manually to see errors
 podman run --rm \
   --userns=keep-id \
   -p 127.0.0.1:5555:5555 \
   -v ~/aipocalypse/data:/app/data:Z \
-  --env-file ~/aipocalypse/.env \
+  --secret aipocalypse_github_client_secret \
+  --secret aipocalypse_admin_password \
+  --secret aipocalypse_hash_pepper \
+  -e GITHUB_CLIENT_ID=your_github_client_id \
+  -e DATABASE_PATH=data/aipocalypse.db \
   ghcr.io/<user>/aipocalypse:v0.1.0
 ```
 
@@ -530,9 +531,24 @@ podman login ghcr.io -u <your-github-user>
 
 # Try pulling manually
 podman pull ghcr.io/<user>/aipocalypse:v0.1.0
+```
 
-# Check network connectivity
-curl -s https://registry-1.docker.io/v2/ | head -5
+If the package is private, make sure you are logged in as the same user that
+runs the Quadlet service.
+
+### Secret missing or misnamed
+
+```bash
+# List available secrets
+podman secret ls
+
+# Inspect secret metadata
+podman secret inspect aipocalypse_github_client_secret
+podman secret inspect aipocalypse_admin_password
+podman secret inspect aipocalypse_hash_pepper
+
+# Recreate a missing secret if needed
+printf '%s' 'your_github_client_secret' | podman secret create aipocalypse_github_client_secret -
 ```
 
 ### Quadlet file not recognized

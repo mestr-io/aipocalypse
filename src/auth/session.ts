@@ -8,10 +8,14 @@
  * that's already required in the environment.
  */
 
+import { getEnvOrSecret } from "../lib/config";
+
 function getSecret(): string {
-  const secret = process.env.GITHUB_CLIENT_SECRET;
-  if (!secret) throw new Error("GITHUB_CLIENT_SECRET environment variable is not set");
-  return secret;
+  return getEnvOrSecret(
+    "GITHUB_CLIENT_SECRET",
+    "aipocalypse_github_client_secret",
+    "GITHUB_CLIENT_SECRET environment variable is not set"
+  );
 }
 
 /**
