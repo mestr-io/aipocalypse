@@ -1,3 +1,4 @@
+import { appPath } from "../../lib/paths";
 import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 
@@ -18,7 +19,7 @@ export function adminLoginPage(options: AdminLoginOptions = {}): string {
   const content = `
     <h1>Admin Login</h1>
     ${errorHtml}
-    <form method="POST" action="/admin/login" class="admin-form">
+    <form method="POST" action="${appPath("/admin/login")}" class="admin-form">
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required autofocus>

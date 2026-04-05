@@ -1,3 +1,5 @@
+import { appPath } from "../lib/paths";
+
 /**
  * Identity rendering with green text and colored glyphs.
  *
@@ -34,5 +36,5 @@ export function renderIdentity(hashedId: string): string {
     .map((s) => `<span style="color:#${s}">\u25A0</span>`)
     .join("");
 
-  return `<a href="/account" class="identity">${hashText} ${glyphs}</a>`;
+  return `<a href="${appPath("/account")}" class="identity">${hashText} ${glyphs}</a>`;
 }

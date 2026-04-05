@@ -12,6 +12,7 @@ import { getUserById, exportUserData, hardDeleteUser, type User } from "./db/que
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
 import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./db/queries/votes";
 import { log } from "./lib/logger";
+import { appPath } from "./lib/paths";
 
 // ---------------------------------------------------------------------------
 // App
@@ -87,14 +88,14 @@ app.get("/privacy", (c) => {
 // Account page
 app.get("/account", (c) => {
   const user = c.get("user" as never) as User | null;
-  if (!user) return c.redirect("/auth/login");
+  if (!user) return c.redirect(appPath("/auth/login"));
   return c.html(accountPage(user));
 });
 
 // Data export — JSON download
 app.get("/account/export", (c) => {
   const user = c.get("user" as never) as User | null;
-  if (!user) return c.redirect("/auth/login");
+  if (!user) return c.redirect(appPath("/auth/login"));
 
   const data = exportUserData(user.id);
   if (!data) return c.text("User not found.", 404);
@@ -108,12 +109,12 @@ app.get("/account/export", (c) => {
 // Account deletion
 app.post("/account/delete", (c) => {
   const user = c.get("user" as never) as User | null;
-  if (!user) return c.redirect("/auth/login");
+  if (!user) return c.redirect(appPath("/auth/login"));
 
   log.info("user.account.deleted", { userId: user.hashedId });
   hardDeleteUser(user.id);
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
-  return c.redirect("/");
+  return c.redirect(appPath("/"));
 });
 
 // ---------------------------------------------------------------------------
@@ -130,7 +131,7 @@ app.post("/vote/:pollId", async (c) => {
   const user = c.get("user" as never) as User | null;
 
   if (!user) {
-    return c.redirect("/auth/login");
+    return c.redirect(appPath("/auth/login"));
   }
 
   const pollId = c.req.param("pollId");
@@ -138,7 +139,7 @@ app.post("/vote/:pollId", async (c) => {
   const questionId = typeof body.questionId === "string" ? body.questionId : "";
 
   if (!questionId) {
-    return c.redirect(`/poll/${pollId}`);
+    return c.redirect(appPath(`/poll/${pollId}`));
   }
 
   // Get the poll to check it exists and is active
@@ -157,7 +158,7 @@ app.post("/vote/:pollId", async (c) => {
 
   log.info("user.vote.cast", { pollId, userId: user.hashedId });
 
-  return c.redirect(`/poll/${pollId}`);
+  return c.redirect(appPath(`/poll/${pollId}`));
 });
 
 // ---------------------------------------------------------------------------

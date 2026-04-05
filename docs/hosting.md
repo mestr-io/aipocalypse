@@ -8,7 +8,7 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 ┌──────────────────────────── Hetzner CAX ARM VPS ──────────────────────────┐
 │                                                                            │
 │  System-level (root)                                                       │
-│  └── nginx.service ─── TLS (certbot) ── /labs/aipocalypse/ → :5555        │
+│  └── nginx.service ─── TLS (certbot) ── /aipocalypse/ → :5555             │
 │                                                                            │
 │  User-level ("deploy" user, rootless Podman)                               │
 │  ├── loginctl enable-linger                                                │
@@ -17,7 +17,7 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 │  │       ├── Image: ghcr.io/<user>/aipocalypse:v0.1.0                      │
 │  │       ├── Port: 127.0.0.1:5555:5555                                    │
 │  │       ├── Volume: ~/aipocalypse/data:/app/data:Z                        │
-│  │       ├── Environment: GITHUB_CLIENT_ID, DATABASE_PATH                  │
+│  │       ├── Environment: GITHUB_CLIENT_ID, DATABASE_PATH, APP_BASE_PATH   │
 │  │       ├── Secrets: aipocalypse_github_client_secret,                    │
 │  │       │            aipocalypse_admin_password,                          │
 │  │       │            aipocalypse_hash_pepper                              │
@@ -36,7 +36,7 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 - SSH access with a sudo-capable user
 - nginx already installed and serving other sites on the domain
 - A GitHub account for pushing images to GHCR (GitHub Container Registry)
-- The domain (`mestr.io`) with DNS pointing to the VPS
+- The domain (`labs.mestr.io`) with DNS pointing to the VPS
 
 ---
 
@@ -219,7 +219,7 @@ cp deploy/aipocalypse.container ~/.config/containers/systemd/
 > ```
 
 If needed, edit the non-sensitive `Environment=` lines in the Quadlet file to set
-`GITHUB_CLIENT_ID` and `DATABASE_PATH` for your deployment.
+`GITHUB_CLIENT_ID`, `DATABASE_PATH`, and `APP_BASE_PATH=/aipocalypse` for your deployment.
 
 Reload systemd to pick up the new Quadlet file:
 
@@ -263,11 +263,11 @@ curl -s http://localhost:5555 | head -20
 > Run these as **root** (or with sudo) on the VPS.
 
 The repository includes an nginx location block at `nginx/aipocalypse.conf`.
-This is a `location` block, not a full server block — it needs to go inside
-your existing `server {}` block for the domain.
+For path-prefixed hosting on `https://labs.mestr.io/aipocalypse/`, use a
+`location /aipocalypse/` block inside your existing `server {}` block.
 
 Add the location block to your nginx config. For example, if your server block
-is at `/etc/nginx/sites-enabled/mestr.io`:
+is at `/etc/nginx/sites-enabled/labs.mestr.io`:
 
 ```bash
 # Option A: Include the file
@@ -278,10 +278,10 @@ is at `/etc/nginx/sites-enabled/mestr.io`:
 sudo nano /etc/nginx/sites-enabled/mestr.io
 ```
 
-The location block contents (from `nginx/aipocalypse.conf`):
+Use this location block:
 
 ```nginx
-location /labs/aipocalypse/ {
+location /aipocalypse/ {
     proxy_pass http://127.0.0.1:5555/;
     proxy_http_version 1.1;
 
@@ -299,6 +299,15 @@ location /labs/aipocalypse/ {
 }
 ```
 
+Also set:
+
+```ini
+Environment=APP_BASE_PATH=/aipocalypse
+```
+
+in the Quadlet file so generated links, form actions, and redirects resolve
+under the prefixed URL.
+
 Test the configuration and reload:
 
 ```bash
@@ -309,7 +318,7 @@ sudo systemctl reload nginx
 Verify end-to-end:
 
 ```bash
-curl -s https://mestr.io/labs/aipocalypse/ | head -20
+curl -s https://labs.mestr.io/aipocalypse/ | head -20
 ```
 
 ---
@@ -331,7 +340,7 @@ sudo apt install -y certbot python3-certbot-nginx
 Obtain a certificate:
 
 ```bash
-sudo certbot --nginx -d mestr.io
+sudo certbot --nginx -d labs.mestr.io
 ```
 
 Certbot will modify your nginx config to add the SSL directives and set up
@@ -377,6 +386,7 @@ Verify:
 ```bash
 systemctl --user status aipocalypse
 curl -s http://localhost:5555 | head -5
+curl -s https://labs.mestr.io/aipocalypse/ | head -5
 ```
 
 ### Post-deploy verification
@@ -390,8 +400,11 @@ systemctl --user status aipocalypse
 # Container is healthy
 podman ps
 
-# App responds
+# App responds locally
 curl -s http://localhost:5555 | head -5
+
+# App responds via nginx path prefix
+curl -s https://labs.mestr.io/aipocalypse/ | head -5
 
 # Check for migration output in logs
 journalctl --user -u aipocalypse --since "5 minutes ago" | head -20
@@ -496,6 +509,7 @@ podman run --rm \
   --secret aipocalypse_hash_pepper \
   -e GITHUB_CLIENT_ID=your_github_client_id \
   -e DATABASE_PATH=data/aipocalypse.db \
+  -e APP_BASE_PATH=/aipocalypse \
   ghcr.io/<user>/aipocalypse:v0.1.0
 ```
 
@@ -535,6 +549,18 @@ podman pull ghcr.io/<user>/aipocalypse:v0.1.0
 
 If the package is private, make sure you are logged in as the same user that
 runs the Quadlet service.
+
+### Base path issues
+
+If the app loads but links, assets, or OAuth redirects point to `/` instead of
+`/aipocalypse/`, verify that the Quadlet file includes:
+
+```ini
+Environment=APP_BASE_PATH=/aipocalypse
+```
+
+and that nginx is proxying `location /aipocalypse/` with a trailing slash on
+`proxy_pass`.
 
 ### Secret missing or misnamed
 

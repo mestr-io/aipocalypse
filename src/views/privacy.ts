@@ -1,3 +1,4 @@
+import { appPath } from "../lib/paths";
 import { layout } from "./layout";
 import type { User } from "../db/queries/users";
 
@@ -29,7 +30,7 @@ export function privacyPage(user: User | null = null): string {
     <h2>Your rights</h2>
 
     <p>You have the right to access, export, or permanently delete your data.
-    You can do all of this from your <a href="/account">Account page</a> (requires sign-in).</p>
+    You can do all of this from your <a href="${appPath("/account")}">Account page</a> (requires sign-in).</p>
 
     <h2>Source code</h2>
 

@@ -1,3 +1,7 @@
+## Purpose
+
+Define public poll listing/detail behavior, related vote interactions, and supporting poll query functions.
+
 ## Requirements
 
 ### Requirement: Active poll list on home page

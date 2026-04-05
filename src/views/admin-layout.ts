@@ -1,3 +1,4 @@
+import { appPath } from "../lib/paths";
 import { escapeHtml } from "./layout";
 
 export interface AdminLayoutOptions {
@@ -19,7 +20,7 @@ export function adminLayout(
   const pageTitle = `${title} — AIPocalypse`;
 
   const logoutLink = authenticated
-    ? `<a href="/admin/logout">logout from admin site</a>`
+    ? `<a href="${appPath("/admin/logout")}">logout from admin site</a>`
     : "";
 
   return `<!DOCTYPE html>
@@ -28,12 +29,12 @@ export function adminLayout(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(pageTitle)}</title>
-  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="${appPath("/public/style.css")}">
 </head>
 <body>
   <nav>
     <div class="container">
-      <a href="/admin" class="site-title">AIPocalypse Admin</a>
+      <a href="${appPath("/admin")}" class="site-title">AIPocalypse Admin</a>
       <div class="nav-links">
         ${logoutLink}
       </div>

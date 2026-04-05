@@ -1,4 +1,8 @@
-## MODIFIED Requirements
+## Purpose
+
+Define admin dashboard behavior, poll CRUD query coverage, and admin poll form support for links/context metadata.
+
+## Requirements
 
 ### Requirement: Admin dashboard
 The application SHALL serve an admin dashboard at `GET /admin` that lists all polls, including soft-deleted ones. Each non-deleted poll title SHALL be a clickable link to the poll's edit form. Soft-deleted polls SHALL be visually distinguished with strikethrough text on the title and a `[deleted]` status badge.

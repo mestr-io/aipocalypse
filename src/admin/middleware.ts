@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { getCookie } from "hono/cookie";
+import { appPath } from "../lib/paths";
 import { verifyToken, COOKIE_NAME } from "./auth";
 
 /**
@@ -18,7 +19,7 @@ export async function adminGuard(c: Context, next: Next): Promise<Response | voi
   const token = getCookie(c, COOKIE_NAME);
 
   if (!token || !(await verifyToken(token))) {
-    return c.redirect("/admin/login");
+    return c.redirect(appPath("/admin/login"));
   }
 
   return next();

@@ -5,6 +5,7 @@ import { upsertUser, isHashedIdBanned, getUserById } from "../db/queries/users";
 import { computeHashedId } from "../db/hash";
 import { log } from "../lib/logger";
 import { getEnvOrSecret } from "../lib/config";
+import { absoluteAppUrl, appPath } from "../lib/paths";
 
 /**
  * GitHub user profile from the API response.
@@ -40,8 +41,7 @@ function getClientSecret(): string {
  * In production behind a reverse proxy, use the original host.
  */
 function getCallbackUrl(requestUrl: string): string {
-  const url = new URL(requestUrl);
-  return `${url.protocol}//${url.host}/auth/callback`;
+  return absoluteAppUrl(requestUrl, "/auth/callback");
 }
 
 // ---------------------------------------------------------------------------
@@ -165,7 +165,7 @@ auth.get("/callback", async (c) => {
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });
 
-  return c.redirect("/");
+  return c.redirect(appPath("/"));
 });
 
 /**
@@ -184,5 +184,5 @@ auth.get("/logout", async (c) => {
   }
   deleteCookie(c, SESSION_COOKIE, { path: "/" });
   log.info("auth.logout", hashedId ? { userId: hashedId } : undefined);
-  return c.redirect("/");
+  return c.redirect(appPath("/"));
 });

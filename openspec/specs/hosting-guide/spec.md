@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the deployment and operations guidance for hosting AIPocalypse with Podman, Quadlet, nginx, and related production infrastructure.
+
+## Requirements
 
 ### Requirement: Hosting guide covers Podman installation
 The guide SHALL include instructions for installing Podman on the VPS and verifying that the installed version supports Quadlet (>= 4.4).

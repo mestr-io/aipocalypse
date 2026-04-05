@@ -1,3 +1,4 @@
+import { appPath } from "../lib/paths";
 import { layout, escapeHtml, progressBar } from "./layout";
 import type { PollDetail } from "../db/queries/polls";
 import type { User } from "../db/queries/users";
@@ -70,7 +71,7 @@ export function pollDetailPage(
   // Voting form wrapper (only if user can vote)
   const currentVoteId = userVote ? escapeHtml(userVote) : "";
   const formOpen = canVote
-    ? `<form method="POST" action="/vote/${escapeHtml(poll.id)}" class="vote-form" data-current-vote="${currentVoteId}">
+    ? `<form method="POST" action="${appPath(`/vote/${escapeHtml(poll.id)}`)}" class="vote-form" data-current-vote="${currentVoteId}">
        <input type="hidden" name="questionId" value="${currentVoteId}">`
     : "";
   const formClose = canVote
@@ -125,7 +126,7 @@ export function pollDetailPage(
   const authPrompt =
     isActive && !user
       ? `<div class="auth-prompt">
-           <a href="/auth/login">Sign in with GitHub</a> to place your bet
+           <a href="${appPath("/auth/login")}">Sign in with GitHub</a> to place your bet
          </div>`
       : "";
 
@@ -155,7 +156,7 @@ export function pollDetailPage(
     ${voteScript}
     <p class="poll-total dimmed">${poll.totalVotes} vote${poll.totalVotes !== 1 ? "s" : ""}</p>
     ${renderLinks(poll.links)}
-    <p><a href="/" class="dimmed">&larr; Back to predictions</a></p>
+    <p><a href="${appPath("/")}" class="dimmed">&larr; Back to predictions</a></p>
   `;
 
   return layout(content, { title: poll.name, user });

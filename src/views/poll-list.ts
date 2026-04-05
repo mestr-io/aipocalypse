@@ -1,3 +1,4 @@
+import { appPath } from "../lib/paths";
 import { layout, escapeHtml } from "./layout";
 import type { ActivePollRow } from "../db/queries/polls";
 import type { User } from "../db/queries/users";
@@ -34,7 +35,7 @@ export function pollListPage(
 
     return `
       <div class="poll-card">
-        <h2><a href="/poll/${escapeHtml(p.id)}">${escapeHtml(p.name)}</a> ${statusBadge}</h2>
+        <h2><a href="${appPath(`/poll/${escapeHtml(p.id)}`)}">${escapeHtml(p.name)}</a> ${statusBadge}</h2>
         <p class="poll-preview">${preview}</p>
         <div class="poll-meta">
           ${dueLabel}

@@ -1,3 +1,7 @@
+## Purpose
+
+Define admin poll editing workflows, edit-form behavior, and poll update operations.
+
 ## Requirements
 
 ### Requirement: Poll edit form

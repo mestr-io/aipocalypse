@@ -1,4 +1,5 @@
 import type { User } from "../db/queries/users";
+import { appPath } from "../lib/paths";
 import { renderIdentity } from "./identity";
 
 export interface LayoutOptions {
@@ -17,8 +18,8 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   const pageTitle = title === "AIPocalypse" ? title : `${title} — AIPocalypse`;
 
   const authSection = user
-    ? `${renderIdentity(user.hashedId)} <span class="nav-sep">|</span> <a href="/auth/logout">Logout</a>`
-    : `<a href="/auth/login">Sign in with GitHub</a> <span class="dimmed login-notice">(<a href="/privacy">we store minimal data</a>)</span>`;
+    ? `${renderIdentity(user.hashedId)} <span class="nav-sep">|</span> <a href="${appPath("/auth/logout")}">Logout</a>`
+    : `<a href="${appPath("/auth/login")}">Sign in with GitHub</a> <span class="dimmed login-notice">(<a href="${appPath("/privacy")}">we store minimal data</a>)</span>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -26,12 +27,12 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(pageTitle)}</title>
-  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="${appPath("/public/style.css")}">
 </head>
 <body>
   <nav>
     <div class="container">
-      <a href="/" class="site-title">AIPocalypse</a>
+      <a href="${appPath("/")}" class="site-title">AIPocalypse</a>
       <div class="nav-links">
         ${authSection}
       </div>
@@ -45,7 +46,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
   <footer>
     <div class="container">
       <span class="dimmed">AIPocalypse — placing bets on the future of code</span>
-      <span class="dimmed"> | <a href="/privacy">Privacy</a></span>
+      <span class="dimmed"> | <a href="${appPath("/privacy")}">Privacy</a></span>
     </div>
   </footer>
 </body>

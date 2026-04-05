@@ -1,3 +1,4 @@
+import { appPath } from "../../lib/paths";
 import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 
@@ -61,7 +62,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     .join("");
 
   const pageTitle = isEdit ? "Edit Poll" : "New Poll";
-  const formAction = isEdit ? `/admin/polls/${pollId}` : "/admin/polls";
+  const formAction = isEdit ? appPath(`/admin/polls/${pollId}`) : appPath("/admin/polls");
   const submitLabel = isEdit ? "Update Poll" : "Create Poll";
 
   const content = `
@@ -97,7 +98,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
       </div>
       <div class="form-group" style="margin-top: 1.5rem;">
         <button type="submit">${submitLabel}</button>
-        <a href="/admin" class="admin-dimmed" style="margin-left: 1rem;">Cancel</a>
+        <a href="${appPath("/admin")}" class="admin-dimmed" style="margin-left: 1rem;">Cancel</a>
       </div>
     </form>
 

@@ -1,3 +1,4 @@
+import { appPath } from "../lib/paths";
 import { layout } from "./layout";
 import { renderIdentity } from "./identity";
 import type { User } from "../db/queries/users";
@@ -15,13 +16,13 @@ export function accountPage(user: User): string {
 
     <p>Download everything we store about you as a JSON file.</p>
 
-    <p><a href="/account/export" class="btn">Download my data</a></p>
+    <p><a href="${appPath("/account/export")}" class="btn">Download my data</a></p>
 
     <h2 class="section-heading danger">Delete account</h2>
 
     <p>Permanently delete your account and all your votes. This cannot be undone.</p>
 
-    <form method="POST" action="/account/delete">
+    <form method="POST" action="${appPath("/account/delete")}">
       <div class="delete-slide">
         <input type="checkbox" id="delete-toggle" />
         <div class="delete-slide-track">
@@ -36,7 +37,7 @@ export function accountPage(user: User): string {
       </div>
     </form>
 
-    <p class="section-heading"><a href="/auth/logout">Logout</a></p>
+    <p class="section-heading"><a href="${appPath("/auth/logout")}">Logout</a></p>
   `;
 
   return layout(content, { title: "Account", user });

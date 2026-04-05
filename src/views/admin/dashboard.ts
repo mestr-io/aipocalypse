@@ -1,3 +1,4 @@
+import { appPath } from "../../lib/paths";
 import { adminLayout } from "../admin-layout";
 import { escapeHtml } from "../layout";
 import type { PollRow } from "../../db/queries/polls";
@@ -20,7 +21,7 @@ export function adminDashboardPage(polls: PollRow[]): string {
         const rowClass = isDeleted ? ' class="deleted-row"' : '';
         const titleCell = isDeleted
           ? `<span class="poll-title-deleted">${escapeHtml(p.name)}</span>`
-          : `<a href="/admin/polls/${p.id}/edit">${escapeHtml(p.name)}</a>`;
+          : `<a href="${appPath(`/admin/polls/${p.id}/edit`)}">${escapeHtml(p.name)}</a>`;
         const statusCell = isDeleted
           ? `<span class="status status-deleted">[deleted]</span>`
           : statusBadge(p.status);
@@ -34,11 +35,11 @@ export function adminDashboardPage(polls: PollRow[]): string {
           <td class="admin-dimmed">${p.createdAt.slice(0, 10)}</td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="5" class="admin-dimmed">No polls yet. <a href="/admin/polls/new">Create one</a>.</td></tr>`;
+    : `<tr><td colspan="5" class="admin-dimmed">No polls yet. <a href="${appPath("/admin/polls/new")}">Create one</a>.</td></tr>`;
 
   const content = `
     <h1>Admin Dashboard</h1>
-    <p><a href="/admin/polls/new" class="btn">+ New Poll</a></p>
+    <p><a href="${appPath("/admin/polls/new")}" class="btn">+ New Poll</a></p>
     <table class="admin-table">
       <thead>
         <tr>

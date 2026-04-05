@@ -1,5 +1,7 @@
-## ADDED Requirements
+## Purpose
 
+Define account page access, user data export, account deletion, and account-related navigation behavior.
+## Requirements
 ### Requirement: Account page route
 The system SHALL serve an authenticated page at `GET /account` accessible only to logged-in users.
 
@@ -39,3 +41,15 @@ The navigation bar SHALL include a link to `/account` for authenticated users.
 #### Scenario: Account link visible when logged in
 - **WHEN** an authenticated user views any page
 - **THEN** the navigation bar includes an "Account" link pointing to `/account`
+
+### Requirement: Account flows generate base-path-aware URLs
+Account page navigation, export links, deletion form actions, and auth redirects SHALL use the configured application base path.
+
+#### Scenario: Account links honor base path
+- **WHEN** `APP_BASE_PATH` is `/aipocalypse` and an authenticated user views the account page
+- **THEN** the navigation link to the account page, the export link, and the account deletion form action all resolve under `/aipocalypse`
+
+#### Scenario: Account auth redirect honors base path
+- **WHEN** `APP_BASE_PATH` is `/aipocalypse` and an unauthenticated user requests the account page
+- **THEN** the redirect target resolves to `/aipocalypse/auth/login`
+

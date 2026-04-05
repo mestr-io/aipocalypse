@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the public privacy page, its disclosures, and privacy-related navigation links rendered throughout the app.
+
+## Requirements
 
 ### Requirement: Privacy page route
 The system SHALL serve a public page at `GET /privacy` accessible to all visitors (authenticated or not).

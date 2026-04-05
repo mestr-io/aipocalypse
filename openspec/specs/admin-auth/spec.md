@@ -1,5 +1,7 @@
-## Requirements
+## Purpose
 
+Define admin password authentication, session handling, access control, and logout behavior for the admin interface.
+## Requirements
 ### Requirement: Admin login page
 The application SHALL serve a login form at `GET /admin/login` that accepts a password. The login page SHALL use the admin layout (no public auth section, no footer, no privacy notice). The login page nav SHALL display "AIPocalypse Admin" without a logout link.
 
@@ -58,3 +60,22 @@ The application SHALL provide a logout mechanism at `GET /admin/logout` that cle
 #### Scenario: Logout link visible on all authenticated pages
 - **WHEN** any authenticated admin page renders (dashboard, poll edit, poll create)
 - **THEN** the nav bar contains a "logout from admin site" link pointing to `/admin/logout`
+
+### Requirement: Admin auth flows generate base-path-aware URLs
+Admin login, logout, protected-route redirects, and admin navigation SHALL use the configured application base path.
+
+#### Scenario: Admin login and logout honor base path
+- **WHEN** `APP_BASE_PATH` is `/aipocalypse` and an admin uses login or logout flows
+- **THEN** login form actions, logout links, successful login redirects, and logout redirects resolve under `/aipocalypse/admin`
+
+#### Scenario: Admin guard redirect honors base path
+- **WHEN** `APP_BASE_PATH` is `/aipocalypse` and an unauthenticated request targets an admin route
+- **THEN** the redirect target resolves to `/aipocalypse/admin/login`
+
+### Requirement: OAuth callback generation honors base path
+The GitHub OAuth callback URL SHALL include the configured application base path.
+
+#### Scenario: OAuth callback uses base path
+- **WHEN** `APP_BASE_PATH` is `/aipocalypse` and the app generates the GitHub OAuth callback URL
+- **THEN** the callback URL resolves to `/aipocalypse/auth/callback`
+
