@@ -38,9 +38,14 @@ function getClientSecret(): string {
 
 /**
  * Build the callback URL based on the incoming request.
- * In production behind a reverse proxy, use the original host.
+ * In production behind a reverse proxy, prefer forwarded proto/host.
  */
-function getCallbackUrl(requestUrl: string): string {
+function getCallbackUrl(requestUrl: string, forwardedProto?: string, host?: string): string {
+  if (host) {
+    const proto = forwardedProto?.split(",")[0]?.trim() || new URL(requestUrl).protocol.replace(":", "");
+    return `${proto}://${host}${appPath("/auth/callback")}`;
+  }
+
   return absoluteAppUrl(requestUrl, "/auth/callback");
 }
 
@@ -56,7 +61,11 @@ export const auth = new Hono();
  */
 auth.get("/login", (c) => {
   const state = crypto.randomUUID();
-  const callbackUrl = getCallbackUrl(c.req.url);
+  const callbackUrl = getCallbackUrl(
+    c.req.url,
+    c.req.header("x-forwarded-proto"),
+    c.req.header("host")
+  );
 
   setCookie(c, STATE_COOKIE, state, {
     httpOnly: true,
@@ -95,7 +104,11 @@ auth.get("/callback", async (c) => {
   }
 
   // Exchange code for access token
-  const callbackUrl = getCallbackUrl(c.req.url);
+  const callbackUrl = getCallbackUrl(
+    c.req.url,
+    c.req.header("x-forwarded-proto"),
+    c.req.header("host")
+  );
   const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
     method: "POST",
     headers: {

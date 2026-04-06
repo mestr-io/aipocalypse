@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { signToken, verifyToken, checkPassword } from "./auth";
+import { signToken, verifyToken, checkPassword, getAdminCookieOptions } from "./auth";
 
 const TEST_PASSWORD = "test-admin-pw-12345";
 
@@ -43,6 +43,28 @@ describe("signToken / verifyToken", () => {
 
   test("verifyToken rejects garbage input", async () => {
     expect(await verifyToken("abc.xyz")).toBe(false);
+  });
+});
+
+describe("getAdminCookieOptions", () => {
+  const originalBasePath = process.env.APP_BASE_PATH;
+
+  afterAll(() => {
+    if (originalBasePath === undefined) {
+      delete process.env.APP_BASE_PATH;
+    } else {
+      process.env.APP_BASE_PATH = originalBasePath;
+    }
+  });
+
+  test("uses /admin by default", () => {
+    delete process.env.APP_BASE_PATH;
+    expect(getAdminCookieOptions().path).toBe("/admin");
+  });
+
+  test("prefixes admin cookie path when APP_BASE_PATH is set", () => {
+    process.env.APP_BASE_PATH = "/aipocalypse";
+    expect(getAdminCookieOptions().path).toBe("/aipocalypse/admin");
   });
 });
 

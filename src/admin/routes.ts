@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { setCookie, deleteCookie } from "hono/cookie";
 import { adminGuard } from "./middleware";
-import { checkPassword, signToken, COOKIE_NAME, COOKIE_OPTIONS } from "./auth";
+import { checkPassword, signToken, COOKIE_NAME, getAdminCookieOptions } from "./auth";
 import { adminLoginPage } from "../views/admin/login";
 import { adminDashboardPage } from "../views/admin/dashboard";
 import { adminPollFormPage, type AnswerValue } from "../views/admin/poll-form";
@@ -34,7 +34,7 @@ admin.post("/login", async (c) => {
   }
 
   const token = await signToken();
-  setCookie(c, COOKIE_NAME, token, COOKIE_OPTIONS);
+  setCookie(c, COOKIE_NAME, token, getAdminCookieOptions());
   log.info("admin.login");
   return c.redirect(appPath("/admin"));
 });
@@ -44,7 +44,7 @@ admin.post("/login", async (c) => {
 // ---------------------------------------------------------------------------
 
 admin.get("/logout", (c) => {
-  deleteCookie(c, COOKIE_NAME, { path: "/admin" });
+  deleteCookie(c, COOKIE_NAME, { path: appPath("/admin") });
   log.info("admin.logout");
   return c.redirect(appPath("/admin/login"));
 });

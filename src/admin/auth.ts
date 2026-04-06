@@ -6,6 +6,7 @@
  */
 
 import { getEnvOrSecret } from "../lib/config";
+import { appPath } from "../lib/paths";
 
 function getAdminPassword(): string {
   return getEnvOrSecret(
@@ -92,8 +93,11 @@ export function checkPassword(password: string): boolean {
  * Cookie options for the admin session.
  */
 export const COOKIE_NAME = "admin_session";
-export const COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: "Strict" as const,
-  path: "/admin",
-};
+
+export function getAdminCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "Strict" as const,
+    path: appPath("/admin"),
+  };
+}
