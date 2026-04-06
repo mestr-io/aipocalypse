@@ -19,7 +19,7 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Run `bun test` to confirm no existing tests are broken
-- [ ] 4.2 Use DevTools to test the home page at 375px viewport width — verify no horizontal scroll, nav stacking, card clickability, and touch target sizes
-- [ ] 4.3 Use DevTools to test a poll detail page at 375px viewport — verify poll options, progress bars, and vote form are usable
-- [ ] 4.4 Verify at 320px viewport width that the narrowest common mobile width renders correctly
+- [x] 4.1 Run `bun test` to confirm no existing tests are broken
+- [x] 4.2 Use DevTools to test the home page at 375px viewport width — verify no horizontal scroll, nav stacking, card clickability, and touch target sizes
+- [x] 4.3 Use DevTools to test a poll detail page at 375px viewport — verify poll options, progress bars, and vote form are usable
+- [x] 4.4 Verify at 320px viewport width that the narrowest common mobile width renders correctly

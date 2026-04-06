@@ -187,6 +187,7 @@ footer {
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
   position: relative;
+  cursor: pointer;
 }
 
 .poll-card:hover {
@@ -206,6 +207,7 @@ footer {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
 }
 
 .poll-card h2 a:hover {
