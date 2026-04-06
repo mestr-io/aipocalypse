@@ -186,6 +186,7 @@ footer {
   border: 1px solid #333340;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .poll-card:hover {
@@ -201,6 +202,12 @@ footer {
   color: #cccccc;
 }
 
+.poll-card h2 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
 .poll-card h2 a:hover {
   color: #ffff66;
 }
@@ -209,12 +216,16 @@ footer {
   font-size: 0.85rem;
   color: #666680;
   margin-bottom: 0.4rem;
+  position: relative;
+  z-index: 1;
 }
 
 .poll-meta {
   font-size: 0.8rem;
   display: flex;
   gap: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 /* === Poll Detail === */

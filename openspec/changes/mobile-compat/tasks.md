@@ -7,8 +7,8 @@
 
 ## 2. Clickable Poll Cards
 
-- [ ] 2.1 In `src/public/style.css`, add `position: relative` to `.poll-card` and a `.poll-card h2 a::after` pseudo-element with `position: absolute; inset: 0` to stretch the link across the full card area
-- [ ] 2.2 Verify that nested elements (`.poll-preview`, `.poll-meta`) remain selectable by adding `position: relative; z-index: 1` where needed if text selection is broken
+- [x] 2.1 In `src/public/style.css`, add `position: relative` to `.poll-card` and a `.poll-card h2 a::after` pseudo-element with `position: absolute; inset: 0` to stretch the link across the full card area
+- [x] 2.2 Verify that nested elements (`.poll-preview`, `.poll-meta`) remain selectable by adding `position: relative; z-index: 1` where needed if text selection is broken
 
 ## 3. Touch Target Sizing
 
