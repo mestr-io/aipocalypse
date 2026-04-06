@@ -31,7 +31,8 @@ export function renderLinks(links: string): string {
 export function pollDetailPage(
   poll: PollDetail,
   user: User | null = null,
-  userVote: string | null = null
+  userVote: string | null = null,
+  csrfToken: string = ""
 ): string {
   const dueLabel = poll.dueDate
     ? `<p class="dimmed">Due: ${escapeHtml(poll.dueDate)}</p>`
@@ -72,6 +73,7 @@ export function pollDetailPage(
   const currentVoteId = userVote ? escapeHtml(userVote) : "";
   const formOpen = canVote
     ? `<form method="POST" action="${appPath(`/vote/${escapeHtml(poll.id)}`)}" class="vote-form" data-current-vote="${currentVoteId}">
+       <input type="hidden" name="csrfToken" value="${escapeHtml(csrfToken)}">
        <input type="hidden" name="questionId" value="${currentVoteId}">`
     : "";
   const formClose = canVote

@@ -25,15 +25,20 @@ The system SHALL allow authenticated users to download all their personal data a
 - **THEN** the JSON contains a `user` object (githubUser, name, avatarUrl, createdAt), a `votes` array, and an `exportedAt` timestamp
 
 ### Requirement: Account deletion with confirmation
-The system SHALL allow authenticated users to permanently delete their account.
+The system SHALL allow authenticated users to permanently delete their account only when `POST /account/delete` includes a valid CSRF token generated for that user from the account page.
 
 #### Scenario: Confirmed deletion
-- **WHEN** an authenticated user confirms deletion via `POST /account/delete`
+- **WHEN** an authenticated user submits `POST /account/delete` with a valid CSRF token
 - **THEN** the system hard-deletes the user row and all their answers, clears the session cookie, and redirects to `/`
 
 #### Scenario: Deletion cascades to votes
 - **WHEN** a user's account is deleted
 - **THEN** all rows in the `answers` table referencing that user are also deleted
+
+#### Scenario: Missing or invalid token rejects deletion
+- **WHEN** an authenticated user submits `POST /account/delete` without a CSRF token or with an invalid token
+- **THEN** the system responds with `403 Forbidden`
+- **AND** the user account is not deleted
 
 ### Requirement: Account link in navigation
 The navigation bar SHALL include a link to `/account` for authenticated users.
@@ -52,4 +57,11 @@ Account page navigation, export links, deletion form actions, and auth redirects
 #### Scenario: Account auth redirect honors base path
 - **WHEN** `APP_BASE_PATH` is `/aipocalypse` and an unauthenticated user requests the account page
 - **THEN** the redirect target resolves to `/aipocalypse/auth/login`
+
+### Requirement: Account deletion form includes CSRF token
+The authenticated account page SHALL render a hidden CSRF token field in the account deletion form.
+
+#### Scenario: Account page renders deletion token
+- **WHEN** an authenticated user navigates to `/account`
+- **THEN** the account deletion form contains a hidden CSRF token field
 

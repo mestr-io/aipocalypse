@@ -1,6 +1,7 @@
 import { test, expect, describe } from "bun:test";
 import { renderLinks, pollDetailPage } from "./poll-detail";
 import type { PollDetail } from "../db/queries/polls";
+import type { User } from "../db/queries/users";
 
 describe("renderLinks", () => {
   test("returns empty string for empty input", () => {
@@ -130,6 +131,13 @@ function makePoll(overrides: Partial<PollDetail> = {}): PollDetail {
   };
 }
 
+const testUser: User = {
+  id: "user-1",
+  hashedId: "a7f3b2c1e9d04f8baa",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+};
+
 describe("pollDetailPage", () => {
   test("renders without links when links field is empty", () => {
     const html = pollDetailPage(makePoll({ links: "" }));
@@ -175,5 +183,16 @@ describe("pollDetailPage", () => {
   test("renders page title from poll name", () => {
     const html = pollDetailPage(makePoll({ name: "AI Impact 2026" }));
     expect(html).toContain("AI Impact 2026");
+  });
+
+  test("renders csrf token in vote form for authenticated users", () => {
+    const html = pollDetailPage(makePoll(), testUser, null, "csrf-token-123");
+    expect(html).toContain('name="csrfToken"');
+    expect(html).toContain('value="csrf-token-123"');
+  });
+
+  test("does not render vote form csrf token for logged-out users", () => {
+    const html = pollDetailPage(makePoll(), null, null, "csrf-token-123");
+    expect(html).not.toContain('name="csrfToken"');
   });
 });

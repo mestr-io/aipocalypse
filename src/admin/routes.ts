@@ -2,12 +2,19 @@ import { Hono } from "hono";
 import { setCookie, deleteCookie } from "hono/cookie";
 import { adminGuard } from "./middleware";
 import { checkPassword, signToken, COOKIE_NAME, getAdminCookieOptions } from "./auth";
+import {
+  isAdminLoginRateLimited,
+  recordAdminLoginFailure,
+  resetAdminLoginFailures,
+} from "./rate-limit";
 import { adminLoginPage } from "../views/admin/login";
 import { adminDashboardPage } from "../views/admin/dashboard";
 import { adminPollFormPage, type AnswerValue } from "../views/admin/poll-form";
 import { createPoll, listPolls, getPollForEdit, updatePoll } from "../db/queries/polls";
+import { createAdminCsrfToken, verifyAdminCsrfToken } from "../lib/csrf";
 import { log } from "../lib/logger";
 import { appPath } from "../lib/paths";
+import { getClientKey } from "../lib/request";
 
 const admin = new Hono();
 
@@ -21,20 +28,43 @@ admin.use("*", adminGuard);
 // Login
 // ---------------------------------------------------------------------------
 
-admin.get("/login", (c) => {
-  return c.html(adminLoginPage());
+admin.get("/login", async (c) => {
+  const csrfToken = await createAdminCsrfToken("admin-login", "anonymous");
+  return c.html(adminLoginPage({ csrfToken }));
 });
 
 admin.post("/login", async (c) => {
-  const body = await c.req.parseBody();
-  const password = body.password;
-
-  if (typeof password !== "string" || !checkPassword(password)) {
-    return c.html(adminLoginPage({ error: "Invalid password." }), 401);
+  const clientKey = getClientKey(c.req.header("x-forwarded-for"), c.req.header("x-real-ip"));
+  if (isAdminLoginRateLimited(clientKey)) {
+    log.info("admin.login.failed", { reason: "rate-limited" });
+    const csrfToken = await createAdminCsrfToken("admin-login", "anonymous");
+    return c.html(adminLoginPage({ error: "Too many attempts. Try again later.", csrfToken }), 429);
   }
 
+  const body = await c.req.parseBody();
+  const password = body.password;
+  const csrfToken = typeof body.csrfToken === "string" ? body.csrfToken : "";
+
+  if (!(await verifyAdminCsrfToken(csrfToken, "admin-login", "anonymous"))) {
+    log.info("security.csrf.rejected", { route: "/admin/login", scope: "admin-login" });
+    return c.text("Forbidden", 403);
+  }
+
+  if (typeof password !== "string" || !checkPassword(password)) {
+    recordAdminLoginFailure(clientKey);
+    log.info("admin.login.failed", { reason: "invalid-password" });
+    const nextCsrfToken = await createAdminCsrfToken("admin-login", "anonymous");
+    return c.html(adminLoginPage({ error: "Invalid password.", csrfToken: nextCsrfToken }), 401);
+  }
+
+  resetAdminLoginFailures(clientKey);
   const token = await signToken();
-  setCookie(c, COOKIE_NAME, token, getAdminCookieOptions());
+  setCookie(
+    c,
+    COOKIE_NAME,
+    token,
+    getAdminCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host"))
+  );
   log.info("admin.login");
   return c.redirect(appPath("/admin"));
 });
@@ -44,7 +74,10 @@ admin.post("/login", async (c) => {
 // ---------------------------------------------------------------------------
 
 admin.get("/logout", (c) => {
-  deleteCookie(c, COOKIE_NAME, { path: appPath("/admin") });
+  deleteCookie(c, COOKIE_NAME, {
+    ...getAdminCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host")),
+    maxAge: 0,
+  });
   log.info("admin.logout");
   return c.redirect(appPath("/admin/login"));
 });
@@ -62,12 +95,19 @@ admin.get("/", (c) => {
 // Poll creation
 // ---------------------------------------------------------------------------
 
-admin.get("/polls/new", (c) => {
-  return c.html(adminPollFormPage());
+admin.get("/polls/new", async (c) => {
+  const csrfToken = await createAdminCsrfToken("admin-poll");
+  return c.html(adminPollFormPage({ csrfToken }));
 });
 
 admin.post("/polls", async (c) => {
   const body = await c.req.parseBody({ all: true });
+  const csrfToken = typeof body.csrfToken === "string" ? body.csrfToken : "";
+
+  if (!(await verifyAdminCsrfToken(csrfToken, "admin-poll"))) {
+    log.info("security.csrf.rejected", { route: "/admin/polls", scope: "admin-poll" });
+    return c.text("Forbidden", 403);
+  }
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const bodyText = typeof body.body === "string" ? body.body.trim() : "";
@@ -95,6 +135,7 @@ admin.post("/polls", async (c) => {
       adminPollFormPage({
         error: errors.join(" "),
         values: { title, body: bodyText, dueDate, status, links, answers: answers.map((a) => ({ text: a })) },
+        csrfToken: await createAdminCsrfToken("admin-poll"),
       }),
       400
     );
@@ -119,7 +160,7 @@ admin.post("/polls", async (c) => {
 // Poll editing
 // ---------------------------------------------------------------------------
 
-admin.get("/polls/:id/edit", (c) => {
+admin.get("/polls/:id/edit", async (c) => {
   const pollId = c.req.param("id");
   const poll = getPollForEdit(pollId);
 
@@ -138,6 +179,7 @@ admin.get("/polls/:id/edit", (c) => {
         links: poll.links,
         answers: poll.questions.map((q) => ({ id: q.id, text: q.body })),
       },
+      csrfToken: await createAdminCsrfToken("admin-poll"),
     })
   );
 });
@@ -152,6 +194,12 @@ admin.post("/polls/:id", async (c) => {
   }
 
   const body = await c.req.parseBody({ all: true });
+  const csrfToken = typeof body.csrfToken === "string" ? body.csrfToken : "";
+
+  if (!(await verifyAdminCsrfToken(csrfToken, "admin-poll"))) {
+    log.info("security.csrf.rejected", { route: "/admin/polls/:id", scope: "admin-poll" });
+    return c.text("Forbidden", 403);
+  }
 
   const title = typeof body.title === "string" ? body.title.trim() : "";
   const bodyText = typeof body.body === "string" ? body.body.trim() : "";
@@ -190,6 +238,7 @@ admin.post("/polls/:id", async (c) => {
         pollId,
         error: errors.join(" "),
         values: { title, body: bodyText, dueDate, status, links, answers: answerPairs },
+        csrfToken: await createAdminCsrfToken("admin-poll"),
       }),
       400
     );

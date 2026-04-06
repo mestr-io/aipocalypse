@@ -9,7 +9,7 @@ const testUser = {
 };
 
 describe("accountPage", () => {
-  const html = accountPage(testUser);
+  const html = accountPage(testUser, "csrf-token-123");
 
   test("renders identity with green text segments", () => {
     expect(html).toContain('color:#009900">a7f3b2</span>');
@@ -31,6 +31,11 @@ describe("accountPage", () => {
   test("contains delete account form with correct action", () => {
     expect(html).toContain('action="/account/delete"');
     expect(html).toContain("Delete my account");
+  });
+
+  test("includes csrf token in delete form", () => {
+    expect(html).toContain('name="csrfToken"');
+    expect(html).toContain('value="csrf-token-123"');
   });
 
   test("does not use browser confirm dialog", () => {

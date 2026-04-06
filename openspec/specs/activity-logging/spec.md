@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define structured application activity logging for significant auth, admin, data-export, account-deletion, and vote events without logging page visits or direct PII.
+
+## Requirements
 
 ### Requirement: Logger utility outputs structured JSON lines
 The system SHALL provide a logger utility at `src/lib/logger.ts` that writes structured JSON lines to stdout. Each log entry MUST contain a `ts` field (ISO 8601 timestamp), a `level` field (string), and an `action` field (dot-separated namespace string). Additional metadata fields SHALL be spread into the top-level JSON object. The logger MUST NOT add any external dependencies.

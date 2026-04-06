@@ -32,3 +32,19 @@ export function getEnvOrSecret(
 
   throw new Error(errorMessage ?? `${envName} is not set and secret file ${secretPath} is missing or empty`);
 }
+
+export function getSessionSecret(): string {
+  return getEnvOrSecret(
+    "SESSION_SECRET",
+    "aipocalypse_session_secret",
+    "SESSION_SECRET environment variable is not set"
+  );
+}
+
+export function getAdminSessionSecret(): string {
+  return getEnvOrSecret(
+    "ADMIN_SESSION_SECRET",
+    "aipocalypse_admin_session_secret",
+    "ADMIN_SESSION_SECRET environment variable is not set"
+  );
+}

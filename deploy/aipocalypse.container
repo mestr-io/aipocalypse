@@ -9,7 +9,8 @@
 # Requires:
 #   - ~/aipocalypse/data/  (SQLite database volume)
 #   - Podman secrets: aipocalypse_github_client_secret,
-#     aipocalypse_admin_password, aipocalypse_hash_pepper
+#     aipocalypse_session_secret, aipocalypse_admin_password,
+#     aipocalypse_admin_session_secret, aipocalypse_hash_pepper
 #
 # See docs/hosting.md for the full setup guide.
 
@@ -25,7 +26,9 @@ Volume=%h/aipocalypse/data:/app/data:Z
 Environment=GITHUB_CLIENT_ID=your_github_client_id
 Environment=DATABASE_PATH=data/aipocalypse.db
 Secret=aipocalypse_github_client_secret
+Secret=aipocalypse_session_secret
 Secret=aipocalypse_admin_password
+Secret=aipocalypse_admin_session_secret
 Secret=aipocalypse_hash_pepper
 UserNS=keep-id
 

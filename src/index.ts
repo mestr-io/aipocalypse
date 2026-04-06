@@ -7,10 +7,21 @@ import { privacyPage } from "./views/privacy";
 import { accountPage } from "./views/account";
 import { admin } from "./admin/routes";
 import { auth } from "./auth/routes";
-import { verifySession, SESSION_COOKIE } from "./auth/session";
-import { getUserById, exportUserData, hardDeleteUser, type User } from "./db/queries/users";
+import {
+  verifySession,
+  SESSION_COOKIE,
+  getSessionCookieOptions,
+} from "./auth/session";
+import {
+  getUserById,
+  exportUserData,
+  hardDeleteUser,
+  isHashedIdBanned,
+  type User,
+} from "./db/queries/users";
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
 import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./db/queries/votes";
+import { createUserCsrfToken, verifyUserCsrfToken } from "./lib/csrf";
 import { log } from "./lib/logger";
 import { appPath } from "./lib/paths";
 
@@ -60,7 +71,7 @@ app.get("/", (c) => {
 });
 
 // Poll detail
-app.get("/poll/:id", (c) => {
+app.get("/poll/:id", async (c) => {
   const user = c.get("user" as never) as User | null;
   const id = c.req.param("id");
   const poll = getPollWithQuestions(id);
@@ -72,7 +83,9 @@ app.get("/poll/:id", (c) => {
   // Get user's current vote for this poll, if logged in
   const userVote = user ? getUserVote(user.id, id) : null;
 
-  return c.html(pollDetailPage(poll, user, userVote));
+  const csrfToken = user ? await createUserCsrfToken("vote", user.id) : "";
+
+  return c.html(pollDetailPage(poll, user, userVote, csrfToken));
 });
 
 // Privacy page
@@ -86,10 +99,11 @@ app.get("/privacy", (c) => {
 // ---------------------------------------------------------------------------
 
 // Account page
-app.get("/account", (c) => {
+app.get("/account", async (c) => {
   const user = c.get("user" as never) as User | null;
   if (!user) return c.redirect(appPath("/auth/login"));
-  return c.html(accountPage(user));
+  const csrfToken = await createUserCsrfToken("account-delete", user.id);
+  return c.html(accountPage(user, csrfToken));
 });
 
 // Data export — JSON download
@@ -107,13 +121,27 @@ app.get("/account/export", (c) => {
 });
 
 // Account deletion
-app.post("/account/delete", (c) => {
+app.post("/account/delete", async (c) => {
   const user = c.get("user" as never) as User | null;
   if (!user) return c.redirect(appPath("/auth/login"));
 
+  const body = await c.req.parseBody();
+  const csrfToken = typeof body.csrfToken === "string" ? body.csrfToken : "";
+  if (!(await verifyUserCsrfToken(csrfToken, "account-delete", user.id))) {
+    log.info("security.csrf.rejected", {
+      route: "/account/delete",
+      scope: "account-delete",
+      userId: user.hashedId,
+    });
+    return c.text("Forbidden", 403);
+  }
+
   log.info("user.account.deleted", { userId: user.hashedId });
   hardDeleteUser(user.id);
-  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  deleteCookie(c, SESSION_COOKIE, {
+    ...getSessionCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host")),
+    maxAge: 0,
+  });
   return c.redirect(appPath("/"));
 });
 
@@ -136,7 +164,26 @@ app.post("/vote/:pollId", async (c) => {
 
   const pollId = c.req.param("pollId");
   const body = await c.req.parseBody();
+  const csrfToken = typeof body.csrfToken === "string" ? body.csrfToken : "";
   const questionId = typeof body.questionId === "string" ? body.questionId : "";
+
+  if (!(await verifyUserCsrfToken(csrfToken, "vote", user.id))) {
+    log.info("security.csrf.rejected", {
+      route: "/vote/:pollId",
+      scope: "vote",
+      userId: user.hashedId,
+    });
+    return c.text("Forbidden", 403);
+  }
+
+  if (isHashedIdBanned(user.hashedId)) {
+    log.info("user.vote.rejected.banned", { pollId, userId: user.hashedId });
+    deleteCookie(c, SESSION_COOKIE, {
+      ...getSessionCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host")),
+      maxAge: 0,
+    });
+    return c.text("Your account has been banned.", 403);
+  }
 
   if (!questionId) {
     return c.redirect(appPath(`/poll/${pollId}`));

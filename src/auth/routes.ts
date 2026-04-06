@@ -1,6 +1,13 @@
 import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
-import { signSession, SESSION_COOKIE, STATE_COOKIE } from "./session";
+import {
+  signSession,
+  verifySession,
+  SESSION_COOKIE,
+  STATE_COOKIE,
+  getSessionCookieOptions,
+  getStateCookieOptions,
+} from "./session";
 import { upsertUser, isHashedIdBanned, getUserById } from "../db/queries/users";
 import { computeHashedId } from "../db/hash";
 import { log } from "../lib/logger";
@@ -67,12 +74,12 @@ auth.get("/login", (c) => {
     c.req.header("host")
   );
 
-  setCookie(c, STATE_COOKIE, state, {
-    httpOnly: true,
-    sameSite: "Lax",
-    path: "/",
-    maxAge: 600, // 10 minutes
-  });
+  setCookie(
+    c,
+    STATE_COOKIE,
+    state,
+    getStateCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host"))
+  );
 
   const params = new URLSearchParams({
     client_id: getClientId(),
@@ -171,12 +178,12 @@ auth.get("/callback", async (c) => {
 
   // Set session cookie
   const sessionToken = await signSession(userId);
-  setCookie(c, SESSION_COOKIE, sessionToken, {
-    httpOnly: true,
-    sameSite: "Lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-  });
+  setCookie(
+    c,
+    SESSION_COOKIE,
+    sessionToken,
+    getSessionCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host"))
+  );
 
   return c.redirect(appPath("/"));
 });
@@ -195,7 +202,10 @@ auth.get("/logout", async (c) => {
       if (user) hashedId = user.hashedId;
     }
   }
-  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  deleteCookie(c, SESSION_COOKIE, {
+    ...getSessionCookieOptions(c.req.url, c.req.header("x-forwarded-proto"), c.req.header("host")),
+    maxAge: 0,
+  });
   log.info("auth.logout", hashedId ? { userId: hashedId } : undefined);
   return c.redirect(appPath("/"));
 });

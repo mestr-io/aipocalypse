@@ -4,13 +4,14 @@ import { escapeHtml } from "../layout";
 
 export interface AdminLoginOptions {
   error?: string;
+  csrfToken?: string;
 }
 
 /**
  * Admin login page with a password form.
  */
 export function adminLoginPage(options: AdminLoginOptions = {}): string {
-  const { error } = options;
+  const { error, csrfToken = "" } = options;
 
   const errorHtml = error
     ? `<div class="admin-error">${escapeHtml(error)}</div>`
@@ -20,6 +21,7 @@ export function adminLoginPage(options: AdminLoginOptions = {}): string {
     <h1>Admin Login</h1>
     ${errorHtml}
     <form method="POST" action="${appPath("/admin/login")}" class="admin-form">
+      <input type="hidden" name="csrfToken" value="${escapeHtml(csrfToken)}">
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required autofocus>

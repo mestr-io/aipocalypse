@@ -19,7 +19,7 @@ export function layout(content: string, options: LayoutOptions = {}): string {
 
   const authSection = user
     ? `${renderIdentity(user.hashedId)} <span class="nav-sep">|</span> <a href="${appPath("/auth/logout")}">Logout</a>`
-    : `<a href="${appPath("/auth/login")}">Sign in with GitHub</a> <span class="dimmed login-notice">(<a href="${appPath("/privacy")}">we store minimal data</a>)</span>`;
+    : `<a href="${appPath("/auth/login")}">Sign in with GitHub</a> <span class="dimmed login-notice">(stores a hashed identity, votes, and session data — <a href="${appPath("/privacy")}">details</a>)</span>`;
 
   return `<!DOCTYPE html>
 <html lang="en">

@@ -19,7 +19,9 @@ This guide walks through deploying AIPocalypse on a Hetzner CAX (ARM64) VPS usin
 │  │       ├── Volume: ~/aipocalypse/data:/app/data:Z                        │
 │  │       ├── Environment: GITHUB_CLIENT_ID, DATABASE_PATH, APP_BASE_PATH   │
 │  │       ├── Secrets: aipocalypse_github_client_secret,                    │
+│  │       │            aipocalypse_session_secret,                          │
 │  │       │            aipocalypse_admin_password,                          │
+│  │       │            aipocalypse_admin_session_secret,                    │
 │  │       │            aipocalypse_hash_pepper                              │
 │  │       └── Restart: always                                               │
 │  │                                                                         │
@@ -166,7 +168,9 @@ Create the required Podman secrets:
 
 ```bash
 printf '%s' 'your_github_client_secret' | podman secret create aipocalypse_github_client_secret -
+openssl rand -hex 32 | podman secret create aipocalypse_session_secret -
 printf '%s' 'your_admin_password' | podman secret create aipocalypse_admin_password -
+openssl rand -hex 32 | podman secret create aipocalypse_admin_session_secret -
 openssl rand -hex 32 | podman secret create aipocalypse_hash_pepper -
 ```
 
@@ -496,7 +500,9 @@ ls -la ~/aipocalypse/data/
 # Verify the required secrets exist
 podman secret ls
 podman secret inspect aipocalypse_github_client_secret
+podman secret inspect aipocalypse_session_secret
 podman secret inspect aipocalypse_admin_password
+podman secret inspect aipocalypse_admin_session_secret
 podman secret inspect aipocalypse_hash_pepper
 
 # Try running the container manually to see errors
@@ -505,7 +511,9 @@ podman run --rm \
   -p 127.0.0.1:5555:5555 \
   -v ~/aipocalypse/data:/app/data:Z \
   --secret aipocalypse_github_client_secret \
+  --secret aipocalypse_session_secret \
   --secret aipocalypse_admin_password \
+  --secret aipocalypse_admin_session_secret \
   --secret aipocalypse_hash_pepper \
   -e GITHUB_CLIENT_ID=your_github_client_id \
   -e DATABASE_PATH=data/aipocalypse.db \
@@ -570,7 +578,9 @@ podman secret ls
 
 # Inspect secret metadata
 podman secret inspect aipocalypse_github_client_secret
+podman secret inspect aipocalypse_session_secret
 podman secret inspect aipocalypse_admin_password
+podman secret inspect aipocalypse_admin_session_secret
 podman secret inspect aipocalypse_hash_pepper
 
 # Recreate a missing secret if needed

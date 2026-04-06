@@ -27,3 +27,6 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+# docs
+docs/security-risks.md

@@ -1,12 +1,22 @@
 /**
  * Admin authentication helpers.
  *
- * Uses HMAC-SHA256 to sign/verify session tokens.
- * The ADMIN_PASSWORD env var is used as the signing key.
+ * Uses HMAC-SHA256 to sign/verify expiring session tokens.
  */
 
-import { getEnvOrSecret } from "../lib/config";
+import { getAdminSessionSecret, getEnvOrSecret } from "../lib/config";
 import { appPath } from "../lib/paths";
+import { shouldUseSecureCookies } from "../lib/request";
+import { signJsonToken, verifyJsonToken } from "../lib/signed-token";
+
+interface AdminSessionPayload {
+  iat: number;
+  exp: number;
+  nonce: string;
+}
+
+export const COOKIE_NAME = "admin_session";
+export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 function getAdminPassword(): string {
   return getEnvOrSecret(
@@ -18,65 +28,23 @@ function getAdminPassword(): string {
 
 /**
  * Create a signed admin session token.
- * Format: `<timestamp>.<hex-signature>`
  */
-export async function signToken(): Promise<string> {
-  const password = getAdminPassword();
-  const timestamp = Date.now().toString();
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(password),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(timestamp)
-  );
-
-  const hex = Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return `${timestamp}.${hex}`;
+export async function signToken(nowMs: number = Date.now()): Promise<string> {
+  return signJsonToken<AdminSessionPayload>(getAdminSessionSecret(), {
+    iat: nowMs,
+    exp: nowMs + ADMIN_SESSION_MAX_AGE_SECONDS * 1000,
+    nonce: crypto.randomUUID(),
+  });
 }
 
 /**
  * Verify a signed admin session token.
- * Returns true if the signature is valid.
+ * Returns true if the signature is valid and the token is unexpired.
  */
-export async function verifyToken(token: string): Promise<boolean> {
+export async function verifyToken(token: string, nowMs: number = Date.now()): Promise<boolean> {
   try {
-    const password = getAdminPassword();
-    const dotIndex = token.indexOf(".");
-    if (dotIndex === -1) return false;
-
-    const timestamp = token.slice(0, dotIndex);
-    const providedHex = token.slice(dotIndex + 1);
-
-    const key = await crypto.subtle.importKey(
-      "raw",
-      new TextEncoder().encode(password),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const signature = await crypto.subtle.sign(
-      "HMAC",
-      key,
-      new TextEncoder().encode(timestamp)
-    );
-
-    const expectedHex = Array.from(new Uint8Array(signature))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
-    return providedHex === expectedHex;
+    const payload = await verifyJsonToken<AdminSessionPayload>(getAdminSessionSecret(), token);
+    return !!payload && payload.exp > nowMs;
   } catch {
     return false;
   }
@@ -92,12 +60,12 @@ export function checkPassword(password: string): boolean {
 /**
  * Cookie options for the admin session.
  */
-export const COOKIE_NAME = "admin_session";
-
-export function getAdminCookieOptions() {
+export function getAdminCookieOptions(requestUrl: string = "http://localhost/", forwardedProto?: string, host?: string) {
   return {
     httpOnly: true,
     sameSite: "Strict" as const,
+    secure: shouldUseSecureCookies(requestUrl, forwardedProto, host),
     path: appPath("/admin"),
+    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
   };
 }

@@ -20,6 +20,7 @@ export interface PollFormOptions {
   error?: string;
   values?: PollFormValues;
   pollId?: string;
+  csrfToken?: string;
 }
 
 const DEFAULT_VALUES: PollFormValues = {
@@ -35,7 +36,7 @@ const DEFAULT_VALUES: PollFormValues = {
  * Admin poll creation form with dynamic answer rows.
  */
 export function adminPollFormPage(options: PollFormOptions = {}): string {
-  const { error, values = DEFAULT_VALUES, pollId } = options;
+  const { error, values = DEFAULT_VALUES, pollId, csrfToken = "" } = options;
   const isEdit = !!pollId;
   const answers = values.answers.length >= 2 ? values.answers : [{ text: "" }, { text: "" }];
 
@@ -69,6 +70,7 @@ export function adminPollFormPage(options: PollFormOptions = {}): string {
     <h1>${pageTitle}</h1>
     ${errorHtml}
     <form method="POST" action="${formAction}" class="admin-form">
+      <input type="hidden" name="csrfToken" value="${escapeHtml(csrfToken)}">
       <div class="form-group">
         <label for="title">Title</label>
         <input type="text" id="title" name="title" value="${escapeHtml(values.title)}" required>

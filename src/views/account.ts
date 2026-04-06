@@ -1,12 +1,12 @@
 import { appPath } from "../lib/paths";
-import { layout } from "./layout";
+import { layout, escapeHtml } from "./layout";
 import { renderIdentity } from "./identity";
 import type { User } from "../db/queries/users";
 
 /**
  * Account management page — data export and deletion.
  */
-export function accountPage(user: User): string {
+export function accountPage(user: User, csrfToken: string = ""): string {
   const content = `
     <h1>Account</h1>
 
@@ -23,6 +23,7 @@ export function accountPage(user: User): string {
     <p>Permanently delete your account and all your votes. This cannot be undone.</p>
 
     <form method="POST" action="${appPath("/account/delete")}">
+      <input type="hidden" name="csrfToken" value="${escapeHtml(csrfToken)}">
       <div class="delete-slide">
         <input type="checkbox" id="delete-toggle" />
         <div class="delete-slide-track">
