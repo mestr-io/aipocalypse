@@ -1,9 +1,7 @@
 ## Purpose
 
 Define structured application activity logging for significant auth, admin, data-export, account-deletion, and vote events without logging page visits or direct PII.
-
 ## Requirements
-
 ### Requirement: Logger utility outputs structured JSON lines
 The system SHALL provide a logger utility at `src/lib/logger.ts` that writes structured JSON lines to stdout. Each log entry MUST contain a `ts` field (ISO 8601 timestamp), a `level` field (string), and an `action` field (dot-separated namespace string). Additional metadata fields SHALL be spread into the top-level JSON object. The logger MUST NOT add any external dependencies.
 
@@ -82,3 +80,12 @@ The system SHALL NOT log page visits, navigation, or GET requests that do not re
 #### Scenario: Page visit not logged
 - **WHEN** a user navigates to any page (e.g., `GET /`, `GET /polls/:id`, `GET /admin`)
 - **THEN** no log entry is written
+
+### Requirement: Vote cooldown rejections are logged
+The system SHALL log vote requests rejected by the in-memory vote cooldown policy as structured JSON lines. The log entry SHALL use action `user.vote.rejected.cooldown` and include the poll ID and the user's hashed ID.
+
+#### Scenario: Cooldown rejection is logged
+- **WHEN** an authenticated user's vote request is rejected because fewer than 5 seconds have elapsed since their last accepted vote write on that poll
+- **THEN** a log entry is written with action `user.vote.rejected.cooldown`
+- **AND** the metadata includes `pollId` and `userId`
+

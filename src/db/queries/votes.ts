@@ -19,6 +19,18 @@ export interface UserAnswer {
 // ---------------------------------------------------------------------------
 
 /**
+ * Load the user's current answer row for a poll.
+ */
+export function getUserAnswer(userId: string, pollId: string): UserAnswer | null {
+  const db = getDb();
+  return db
+    .query<UserAnswer, [string, string]>(
+      "SELECT id, userId, pollId, questionId, createdAt, updatedAt FROM answers WHERE userId = ? AND pollId = ?"
+    )
+    .get(userId, pollId);
+}
+
+/**
  * Cast or change a vote. Uses upsert logic:
  * - If the user has no active answer for this poll, insert one.
  * - If they already voted, update the questionId (vote change).
@@ -28,33 +40,27 @@ export interface UserAnswer {
 export function castVote(
   userId: string,
   pollId: string,
-  questionId: string
+  questionId: string,
+  now: Date = new Date(),
 ): string {
   const db = getDb();
-  const now = new Date().toISOString();
+  const nowIso = now.toISOString();
 
-  // Check for existing active answer for this user+poll
-  const existing = db
-    .query<{ id: string }, [string, string]>(
-      "SELECT id FROM answers WHERE userId = ? AND pollId = ?"
-    )
-    .get(userId, pollId);
+  const existing = getUserAnswer(userId, pollId);
 
   if (existing) {
-    // Update existing vote
     db.run(
       `UPDATE answers SET questionId = ?, updatedAt = ? WHERE id = ?`,
-      [questionId, now, existing.id]
+      [questionId, nowIso, existing.id]
     );
     return existing.id;
   }
 
-  // Insert new vote
   const answerId = generateUUIDv7();
   db.run(
     `INSERT INTO answers (id, userId, pollId, questionId, createdAt, updatedAt)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [answerId, userId, pollId, questionId, now, now]
+    [answerId, userId, pollId, questionId, nowIso, nowIso]
   );
 
   return answerId;
@@ -69,12 +75,7 @@ export function getUserVote(
   pollId: string
 ): string | null {
   const db = getDb();
-  const row = db
-    .query<{ questionId: string }, [string, string]>(
-      "SELECT questionId FROM answers WHERE userId = ? AND pollId = ?"
-    )
-    .get(userId, pollId);
-
+  const row = getUserAnswer(userId, pollId);
   return row?.questionId ?? null;
 }
 

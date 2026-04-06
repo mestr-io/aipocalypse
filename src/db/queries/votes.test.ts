@@ -1,7 +1,13 @@
 import { test, expect, describe, beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./votes";
+import {
+  castVote,
+  getUserVote,
+  isValidQuestion,
+  getUserVotedPollIds,
+  getUserAnswer,
+} from "./votes";
 import { createPoll } from "./polls";
 import { upsertUser } from "./users";
 import { runMigrations } from "../migrate";
@@ -76,6 +82,15 @@ describe("votes", () => {
 
       expect(getUserVote(userId, pollId)).toBe(questionIds[0]!);
       expect(getUserVote(userId2, pollId)).toBe(questionIds[1]!);
+    });
+
+    test("updates updatedAt on successful vote change", () => {
+      castVote(userId, pollId, questionIds[0]!, new Date("2026-01-01T00:00:00.000Z"));
+      castVote(userId, pollId, questionIds[1]!, new Date("2026-01-01T00:00:06.000Z"));
+
+      const answer = getUserAnswer(userId, pollId);
+      expect(answer?.updatedAt).toBe("2026-01-01T00:00:06.000Z");
+      expect(answer?.questionId).toBe(questionIds[1]!);
     });
   });
 

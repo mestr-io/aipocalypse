@@ -9,6 +9,7 @@ import { upsertUser, banHashedId, getUserById } from "./db/queries/users";
 import { getUserVote } from "./db/queries/votes";
 import { getDb, closeDb } from "./db";
 import { runMigrations } from "./db/migrate";
+import { resetVoteThrottleForTest } from "./vote-throttle";
 
 const TEST_DIR = join(import.meta.dirname!, "../.test-tmp");
 const TEST_DB_PATH = join(TEST_DIR, "test-security-routes.db");
@@ -67,6 +68,7 @@ beforeAll(async () => {
 beforeEach(() => {
   consoleSpy.mockClear();
   resetAdminLoginRateLimitStore();
+  resetVoteThrottleForTest();
   closeDb();
   rmSync(TEST_DIR, { recursive: true, force: true });
   mkdirSync(TEST_DIR, { recursive: true });
@@ -219,6 +221,42 @@ describe("security-sensitive routes", () => {
     }));
 
     expect(response.status).toBe(403);
+  });
+
+  test("vote cooldown rejection returns 429 and is logged", async () => {
+    const csrfTokenResponse = await app.fetch(new Request(`http://localhost/poll/${pollId}`, {
+      headers: { cookie: await getUserCookie() },
+    }));
+    const html = await csrfTokenResponse.text();
+    const match = html.match(/name="csrfToken" value="([^"]+)"/);
+    const csrfToken = match?.[1] ?? "";
+
+    const firstResponse = await app.fetch(new Request(`http://localhost/vote/${pollId}`, {
+      method: "POST",
+      headers: {
+        cookie: await getUserCookie(),
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ csrfToken, questionId }),
+    }));
+    expect(firstResponse.status).toBe(302);
+
+    const secondResponse = await app.fetch(new Request(`http://localhost/vote/${pollId}`, {
+      method: "POST",
+      headers: {
+        cookie: await getUserCookie(),
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({ csrfToken, questionId }),
+    }));
+
+    expect(secondResponse.status).toBe(429);
+    expect(await secondResponse.text()).toContain("Please wait a few seconds");
+    expect(secondResponse.headers.get("retry-after")).toBe("5");
+
+    const logEntry = getLatestJsonLog();
+    expect(logEntry.action).toBe("user.vote.rejected.cooldown");
+    expect(logEntry.userId).toBe(userHash);
   });
 
   test("banned user vote is rejected, logged, and clears session", async () => {

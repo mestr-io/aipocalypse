@@ -1,9 +1,7 @@
 ## Purpose
 
 Define public poll listing/detail behavior, related vote interactions, and supporting poll query functions.
-
 ## Requirements
-
 ### Requirement: Active poll list on home page
 The application SHALL display a list of all active polls on the home page (`GET /`). Each poll entry SHALL show the poll title, a preview of the description, the due date, and the total number of votes cast. For authenticated users, each poll card SHALL also display a `[voted]` badge if the user has previously voted on that poll. Context links SHALL NOT be rendered on poll list cards — they are shown only on the poll detail page.
 
@@ -98,6 +96,46 @@ The application SHALL render a poll detail page at `GET /poll/:id` showing the p
 - **WHEN** the links field contains lines that do not match the `[Label](url)` format
 - **THEN** those lines are silently ignored and only valid `[Label](url)` entries are rendered
 
+### Requirement: Vote form includes CSRF token
+The poll detail page SHALL render a hidden CSRF token field inside the vote form for authenticated users.
+
+#### Scenario: Authenticated poll detail includes vote token
+- **WHEN** an authenticated user views `GET /poll/:id` for an active poll
+- **THEN** the vote form contains a hidden CSRF token field
+
+#### Scenario: Logged-out poll detail shows no vote token
+- **WHEN** a logged-out user views `GET /poll/:id`
+- **THEN** no vote form CSRF token is rendered because no vote form is available
+
+### Requirement: Vote submission validates CSRF token and ban status
+The application SHALL accept `POST /vote/:pollId` only when the authenticated user session is valid, the submitted CSRF token is valid, the poll is active, the selected question belongs to the poll, the user's hashed identity is not currently banned, and the in-memory vote cooldown for that user and poll has elapsed. The first vote on a poll SHALL be allowed immediately. If fewer than 5 seconds have elapsed since the last accepted vote write for that user on that poll, the application SHALL reject the request with `429 Too Many Requests` and SHALL NOT query or update SQLite for cooldown enforcement.
+
+#### Scenario: Valid vote submission succeeds
+- **WHEN** an authenticated, non-banned user submits `POST /vote/:pollId` with a valid CSRF token and a valid option for an active poll
+- **THEN** the application records or updates the vote
+- **AND** redirects back to the poll detail page
+
+#### Scenario: Missing or invalid CSRF token rejects vote
+- **WHEN** an authenticated user submits `POST /vote/:pollId` without a CSRF token or with an invalid token
+- **THEN** the application responds with `403 Forbidden`
+- **AND** no vote is created or changed
+
+#### Scenario: User banned after login cannot keep voting
+- **WHEN** an authenticated user whose hashed identity has since been added to `banned_hashed_ids` submits `POST /vote/:pollId`
+- **THEN** the application responds with `403 Forbidden`
+- **AND** no vote is created or changed
+- **AND** the user session cookie is cleared
+
+#### Scenario: First vote is not delayed by cooldown
+- **WHEN** an authenticated user who has not yet voted on a poll submits a valid vote
+- **THEN** the application accepts the vote immediately
+
+#### Scenario: Rapid repeat vote change is throttled from memory
+- **WHEN** an authenticated user submits another valid vote request for the same poll less than 5 seconds after their previous accepted vote write
+- **THEN** the application responds with `429 Too Many Requests`
+- **AND** the existing stored vote is unchanged
+- **AND** cooldown enforcement does not require a SQLite read to determine whether the request is too soon
+
 ### Requirement: Active polls query function
 The application SHALL provide a `listActivePolls()` function that returns all active polls with their total vote counts and context links.
 
@@ -145,3 +183,4 @@ The application SHALL provide a `getUserVotedPollIds(userId: number)` function i
 #### Scenario: Only active polls included
 - **WHEN** `getUserVotedPollIds(userId)` is called and the user has voted on a soft-deleted poll
 - **THEN** the deleted poll's ID is still included (votes are preserved; filtering is the view's concern)
+

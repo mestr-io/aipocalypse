@@ -20,10 +20,16 @@ import {
   type User,
 } from "./db/queries/users";
 import { listPublicPolls, getPollWithQuestions } from "./db/queries/polls";
-import { castVote, getUserVote, isValidQuestion, getUserVotedPollIds } from "./db/queries/votes";
+import {
+  castVote,
+  getUserVote,
+  isValidQuestion,
+  getUserVotedPollIds,
+} from "./db/queries/votes";
 import { createUserCsrfToken, verifyUserCsrfToken } from "./lib/csrf";
 import { log } from "./lib/logger";
 import { appPath } from "./lib/paths";
+import { isVoteThrottled, recordAcceptedVote, VOTE_COOLDOWN_MS } from "./vote-throttle";
 
 // ---------------------------------------------------------------------------
 // App
@@ -200,8 +206,15 @@ app.post("/vote/:pollId", async (c) => {
     return c.text("Invalid option.", 400);
   }
 
+  if (isVoteThrottled(user.id, pollId)) {
+    log.info("user.vote.rejected.cooldown", { pollId, userId: user.hashedId });
+    c.header("Retry-After", String(Math.ceil(VOTE_COOLDOWN_MS / 1000)));
+    return c.text("You just changed your vote. Please wait a few seconds before changing it again.", 429);
+  }
+
   // Cast or update the vote
   castVote(user.id, pollId, questionId);
+  recordAcceptedVote(user.id, pollId);
 
   log.info("user.vote.cast", { pollId, userId: user.hashedId });
 
