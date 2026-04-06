@@ -12,10 +12,10 @@
 
 ## 3. Touch Target Sizing
 
-- [ ] 3.1 In the mobile media query, add padding to `.nav-links a` and `.site-title` to achieve at least 44px touch target height
-- [ ] 3.2 Add padding to `.poll-option` to ensure at least 44px tap area height on all viewports
-- [ ] 3.3 Add padding to `footer a` and `footer` to ensure at least 44px touch target for footer links on mobile
-- [ ] 3.4 Add minimum padding to `button` and `.btn` to ensure at least 44px touch target on mobile
+- [x] 3.1 In the mobile media query, add padding to `.nav-links a` and `.site-title` to achieve at least 44px touch target height
+- [x] 3.2 Add padding to `.poll-option` to ensure at least 44px tap area height on all viewports
+- [x] 3.3 Add padding to `footer a` and `footer` to ensure at least 44px touch target for footer links on mobile
+- [x] 3.4 Add minimum padding to `button` and `.btn` to ensure at least 44px touch target on mobile
 
 ## 4. Verification
 
