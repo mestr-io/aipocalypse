@@ -14,7 +14,7 @@ The system SHALL serve an authenticated page at `GET /account` accessible only t
 - **THEN** the user is redirected to `/auth/login`
 
 ### Requirement: Data export
-The system SHALL allow authenticated users to download all their personal data as a JSON file.
+The system SHALL allow authenticated users to download all personal data currently stored for their account as a JSON file.
 
 #### Scenario: Successful data export
 - **WHEN** an authenticated user requests `GET /account/export`
@@ -22,7 +22,8 @@ The system SHALL allow authenticated users to download all their personal data a
 
 #### Scenario: Export JSON structure
 - **WHEN** an authenticated user downloads their data
-- **THEN** the JSON contains a `user` object (githubUser, name, avatarUrl, createdAt), a `votes` array, and an `exportedAt` timestamp
+- **THEN** the JSON contains a `user` object with `hashedId` and `createdAt`, a `votes` array, and an `exportedAt` timestamp
+- **AND** the export does NOT contain GitHub username, display name, or avatar fields
 
 ### Requirement: Account deletion with confirmation
 The system SHALL allow authenticated users to permanently delete their account only when `POST /account/delete` includes a valid CSRF token generated for that user from the account page.

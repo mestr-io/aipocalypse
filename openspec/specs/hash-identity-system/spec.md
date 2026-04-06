@@ -1,3 +1,7 @@
+## Purpose
+
+Define hashed GitHub identity derivation, pseudonymous user rendering, ban checks, privacy-preserving OAuth handling, and related account/export behavior.
+
 ## Requirements
 
 ### Requirement: Hash derivation function
